@@ -1,0 +1,2947 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GRIDIRON MANAGER 26 — NFL Football Manager</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+    :root {
+      --bg-sidebar: #0d121f;
+      --bg-main: #111827;
+      --bg-card: #161f32;
+      --bg-card-hover: #1d2942;
+      --border-fm: #24314a;
+      --fm-blue: #0ea5e9;
+      --fm-gold: #eab308;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+      background-color: var(--bg-main);
+      color: #e2e8f0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    .fm-topbar {
+      background: linear-gradient(90deg, #0b4f82 0%, #0e3a63 45%, #11223b 100%);
+      border-bottom: 2px solid #d9a020;
+    }
+    .fm-card {
+      background: #151e30;
+      border: 1px solid #25334d;
+      border-radius: 0.6rem;
+    }
+    .fm-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.45rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #94a3b8;
+      transition: all 0.14s ease;
+      text-align: left;
+    }
+    .fm-sidebar-item:hover {
+      background: #1a243b;
+      color: #f1f5f9;
+    }
+    .fm-sidebar-item.active {
+      background: linear-gradient(90deg, rgba(14,165,233,0.18) 0%, rgba(14,165,233,0.05) 100%);
+      color: #ffffff;
+      border-left: 3px solid #eab308;
+      padding-left: calc(0.75rem - 3px);
+    }
+    .play-card {
+      background: #11192a;
+      border: 1.5px solid #263552;
+      border-radius: 0.55rem;
+      transition: all 0.12s ease;
+    }
+    .play-card:hover {
+      border-color: #38bdf8;
+      background: #17233a;
+    }
+    .play-card.selected {
+      border-color: #eab308;
+      background: #1a2742;
+      box-shadow: 0 0 0 1px rgba(234,179,8,0.45);
+    }
+    .ovr-elite { background: #10b981; color: #022c22; }
+    .ovr-good  { background: #38bdf8; color: #082f49; }
+    .ovr-avg   { background: #eab308; color: #422006; }
+    .ovr-low   { background: #64748b; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0d121f; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    button, select, input { touch-action: manipulation; }
+    .mobile-bottom-nav {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#111827] text-slate-200">
+    <!-- PIN LOCK SCREEN (2인 전용 접속 잠금) -->
+  <div id="pin-lock-screen" class="fixed inset-0 z-50 bg-[#090e1a] hidden items-center justify-center p-4">
+    <div class="fm-card w-full max-w-xs p-6 text-center space-y-5 shadow-2xl border-slate-700">
+      <div>
+        <div class="w-12 h-12 mx-auto rounded-xl bg-sky-500/20 border border-sky-400/50 flex items-center justify-center text-2xl">🏈</div>
+        <h1 class="text-lg font-black text-white mt-3 tracking-tight">GRIDIRON MANAGER 26</h1>
+        <p class="text-xs text-slate-400 mt-1">접속 PIN 4자리를 입력하세요</p>
+      </div>
+      <div id="pin-dots" class="flex justify-center gap-3 py-1">
+        <span class="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-transparent"></span>
+        <span class="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-transparent"></span>
+        <span class="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-transparent"></span>
+        <span class="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-transparent"></span>
+      </div>
+      <div id="pin-error" class="text-xs font-bold text-rose-400 min-h-[16px]"></div>
+      <div class="grid grid-cols-3 gap-2 font-mono-num">
+        <button onclick="pressPinKey('1')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">1</button>
+        <button onclick="pressPinKey('2')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">2</button>
+        <button onclick="pressPinKey('3')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">3</button>
+        <button onclick="pressPinKey('4')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">4</button>
+        <button onclick="pressPinKey('5')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">5</button>
+        <button onclick="pressPinKey('6')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">6</button>
+        <button onclick="pressPinKey('7')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">7</button>
+        <button onclick="pressPinKey('8')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">8</button>
+        <button onclick="pressPinKey('9')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">9</button>
+        <button onclick="clearPinInput()" class="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs font-bold">초기화</button>
+        <button onclick="pressPinKey('0')" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-extrabold">0</button>
+        <button onclick="backspacePinKey()" class="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-base font-bold">⌫</button>
+      </div>
+      <label class="flex items-center justify-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+        <input id="pin-remember" type="checkbox" checked class="accent-sky-500 rounded" />
+        <span>이 기기에서 로그인 유지</span>
+      </label>
+    </div>
+  </div>
+
+  <div id="app-root" class="min-h-screen flex flex-col"></div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- MODAL OVERLAY -->
+  <div id="modal-overlay" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="fm-card w-full max-w-2xl max-h-[88vh] overflow-y-auto p-5 shadow-2xl border-slate-600">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3 mb-4">
+        <h2 id="modal-title" class="text-base font-extrabold text-white">상세 정보</h2>
+        <button id="modal-close" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">✕</button>
+      </div>
+      <div id="modal-body" class="space-y-4"></div>
+    </div>
+  </div>
+
+<script>
+// ============================================================================
+// 🔒 2인 전용 접속 PIN 설정 (원하는 4자리 숫자로 변경하세요! ''로 비우면 잠금 해제)
+// ============================================================================
+const ACCESS_PIN = '2026';
+const PIN_AUTH_KEY = 'gm26_pin_unlocked_v1';
+let PIN_BUFFER = '';
+
+function isPinUnlocked() {
+  if (!ACCESS_PIN) return true;
+  try {
+    if (localStorage.getItem(PIN_AUTH_KEY) === ACCESS_PIN) return true;
+  } catch (e) {}
+  return false;
+}
+
+function updatePinDots() {
+  const wrap = document.getElementById('pin-dots');
+  if (!wrap) return;
+  Array.from(wrap.children).forEach((dot, i) => {
+    if (i < PIN_BUFFER.length) {
+      dot.className = 'w-3.5 h-3.5 rounded-full border-2 border-amber-400 bg-amber-400 transition';
+    } else {
+      dot.className = 'w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-transparent transition';
+    }
+  });
+}
+
+function pressPinKey(digit) {
+  if (PIN_BUFFER.length >= ACCESS_PIN.length) return;
+  PIN_BUFFER += String(digit);
+  const err = document.getElementById('pin-error');
+  if (err) err.textContent = '';
+  updatePinDots();
+  if (PIN_BUFFER.length === ACCESS_PIN.length) {
+    if (PIN_BUFFER === ACCESS_PIN) {
+      const rem = document.getElementById('pin-remember');
+      if (!rem || rem.checked) {
+        try { localStorage.setItem(PIN_AUTH_KEY, ACCESS_PIN); } catch (e) {}
+      }
+      const lockEl = document.getElementById('pin-lock-screen');
+      if (lockEl) { lockEl.classList.add('hidden'); lockEl.classList.remove('flex'); }
+      renderApp();
+    } else {
+      if (err) err.textContent = 'PIN 번호가 일치하지 않습니다.';
+      PIN_BUFFER = '';
+      updatePinDots();
+    }
+  }
+}
+
+function backspacePinKey() {
+  PIN_BUFFER = PIN_BUFFER.slice(0, -1);
+  updatePinDots();
+}
+
+function clearPinInput() {
+  PIN_BUFFER = '';
+  const err = document.getElementById('pin-error');
+  if (err) err.textContent = '';
+  updatePinDots();
+}
+
+// ============================================================================
+// 1. CONSTANTS, 32 FRANCHISES, EMBLEMS & MADDEN/FM PLAYBOOK
+// ============================================================================
+const BASE_SALARY_CAP_2026 = 301.2;
+function getSalaryCap() { return (STATE && STATE.salaryCap) ? STATE.salaryCap : BASE_SALARY_CAP_2026; }
+const STORAGE_KEY = 'gridiron_manager_26_fm_v3';
+
+const DIVISIONS = [
+  { conf: 'AFC', div: 'East', teams: [
+    { id: 'BUF', city: 'Buffalo', name: 'Bisons', color: '#00338D', accent: '#C60C30', icon: 'bison', stars: 4.5 },
+    { id: 'MIA', city: 'Miami', name: 'Orcas', color: '#008E97', accent: '#FC4C02', icon: 'fin', stars: 3.5 },
+    { id: 'NE',  city: 'New England', name: 'Colonials', color: '#0B2347', accent: '#C60C30', icon: 'star', stars: 3.0 },
+    { id: 'NYJ', city: 'New York', name: 'Aeros', color: '#125740', accent: '#E2E8F0', icon: 'jet', stars: 3.0 },
+  ]},
+  { conf: 'AFC', div: 'North', teams: [
+    { id: 'BAL', city: 'Baltimore', name: 'Crows', color: '#241773', accent: '#D4AF37', icon: 'bird', stars: 4.5 },
+    { id: 'CIN', city: 'Cincinnati', name: 'Tigres', color: '#FB4F14', accent: '#111827', icon: 'stripes', stars: 4.0 },
+    { id: 'CLE', city: 'Cleveland', name: 'Bronzes', color: '#4A2511', accent: '#FF3C00', icon: 'helmet', stars: 3.0 },
+    { id: 'PIT', city: 'Pittsburgh', name: 'Irons', color: '#111827', accent: '#FFB612', icon: 'triad', stars: 4.0 },
+  ]},
+  { conf: 'AFC', div: 'South', teams: [
+    { id: 'HOU', city: 'Houston', name: 'Bulls', color: '#03202F', accent: '#A71930', icon: 'bull', stars: 4.0 },
+    { id: 'IND', city: 'Indianapolis', name: 'Stallions', color: '#002C5F', accent: '#F8FAFC', icon: 'shoe', stars: 3.5 },
+    { id: 'JAX', city: 'Jacksonville', name: 'Lynx', color: '#006778', accent: '#D7A22A', icon: 'claw', stars: 3.5 },
+    { id: 'TEN', city: 'Tennessee', name: 'Spartans', color: '#0C2340', accent: '#4B92DB', icon: 'shield', stars: 3.0 },
+  ]},
+  { conf: 'AFC', div: 'West', teams: [
+    { id: 'DEN', city: 'Denver', name: 'Mustangs', color: '#FB4F14', accent: '#002244', icon: 'peak', stars: 3.5 },
+    { id: 'KC',  city: 'Kansas City', name: 'Arrowheads', color: '#E31837', accent: '#FFB81C', icon: 'arrow', stars: 5.0 },
+    { id: 'LV',  city: 'Las Vegas', name: 'Corsairs', color: '#18181B', accent: '#CBD5E1', icon: 'saber', stars: 3.0 },
+    { id: 'LAC', city: 'Los Angeles', name: 'Volts', color: '#0080C6', accent: '#FFC20E', icon: 'bolt', stars: 4.0 },
+  ]},
+  { conf: 'NFC', div: 'East', teams: [
+    { id: 'DAL', city: 'Dallas', name: 'Wranglers', color: '#003594', accent: '#E2E8F0', icon: 'star', stars: 4.0 },
+    { id: 'NYG', city: 'New York', name: 'Empire', color: '#0B2265', accent: '#A71930', icon: 'skyline', stars: 3.0 },
+    { id: 'PHI', city: 'Philadelphia', name: 'Talons', color: '#004C54', accent: '#CBD5E1', icon: 'bird', stars: 4.5 },
+    { id: 'WAS', city: 'Washington', name: 'Generals', color: '#5A1414', accent: '#FFB612', icon: 'chevron', stars: 3.5 },
+  ]},
+  { conf: 'NFC', div: 'North', teams: [
+    { id: 'CHI', city: 'Chicago', name: 'Grizzlies', color: '#0B162A', accent: '#C83803', icon: 'claw', stars: 3.5 },
+    { id: 'DET', city: 'Detroit', name: 'Leos', color: '#0076B6', accent: '#E2E8F0', icon: 'mane', stars: 4.5 },
+    { id: 'GB',  city: 'Green Bay', name: 'Baymen', color: '#203731', accent: '#FFB612', icon: 'oval', stars: 4.0 },
+    { id: 'MIN', city: 'Minnesota', name: 'Norsemen', color: '#4F2683', accent: '#FFC62F', icon: 'horn', stars: 4.0 },
+  ]},
+  { conf: 'NFC', div: 'South', teams: [
+    { id: 'ATL', city: 'Atlanta', name: 'Raptors', color: '#A71930', accent: '#111827', icon: 'bird', stars: 3.5 },
+    { id: 'CAR', city: 'Carolina', name: 'Pumas', color: '#0085CA', accent: '#111827', icon: 'claw', stars: 3.0 },
+    { id: 'NO',  city: 'New Orleans', name: 'Fleurs', color: '#111827', accent: '#D3BC8D', icon: 'fleur', stars: 3.5 },
+    { id: 'TB',  city: 'Tampa Bay', name: 'Privateers', color: '#B91C1C', accent: '#CBD5E1', icon: 'saber', stars: 4.0 },
+  ]},
+  { conf: 'NFC', div: 'West', teams: [
+    { id: 'ARI', city: 'Arizona', name: 'Redwings', color: '#97233F', accent: '#FFB612', icon: 'bird', stars: 3.5 },
+    { id: 'LAR', city: 'Los Angeles', name: 'Bighorns', color: '#003594', accent: '#FFA300', icon: 'horn', stars: 4.0 },
+    { id: 'SF',  city: 'San Francisco', name: '48ers', color: '#AA0000', accent: '#B3995D', icon: 'oval', stars: 4.5 },
+    { id: 'SEA', city: 'Seattle', name: 'Ospreys', color: '#002244', accent: '#69BE28', icon: 'bird', stars: 4.0 },
+  ]},
+];
+
+// Parody/Homage Star Player Seeds (Non-infringing phonetic variants for all 32 franchises)
+const TEAM_STAR_SEEDS = {
+  KC:  [['Patrik Maholmes','QB',96,30,15],['Traveis Kelcee','TE',91,36,87],['Kris Jonez','DL',93,31,95],['Isiah Pacheko','RB',84,26,10]],
+  LAC: [['Justyn Herburt','QB',91,27,10],['Ladd McConki','WR',86,24,15],['Derwyn Jamez','S',90,29,3],['Rashon Slayter','OL',90,26,70],['Khalyl Macke','DL',88,34,52]],
+  BUF: [['Jash Alen','QB',95,29,17],['Jamez Kook','RB',86,26,4],['Khalyl Shakyr','WR',84,25,10],['Greg Rousso','DL',85,25,50]],
+  BAL: [['Lamarr Jacksen','QB',95,28,8],['Derrik Henrie','RB',92,31,22],['Zay Flowrs','WR',86,25,4],['Roquon Smyth','LB',91,28,0],['Kile Hamylton','S',92,24,14]],
+  CIN: [['Joey Burro','QB',93,28,9],['JaMar Chaze','WR',95,25,1],['Tee Higgens','WR',88,26,5],['Trey Hendriksn','DL',90,30,91]],
+  SF:  [['Brok Purdie','QB',87,25,13],['Kristian McCaffri','RB',94,29,23],['Nik Boza','DL',93,28,97],['Fred Warnr','LB',94,28,54],['Georj Kitel','TE',92,32,85]],
+  PHI: [['Jaylen Hurtz','QB',89,27,1],['Saqwon Barkly','RB',94,28,26],['A.J. Broun','WR',93,28,11],['DeVonte Smyth','WR',88,26,6],['Jaylen Kartr','DL',89,24,98]],
+  DET: [['Jard Gof','QB',88,31,16],['Amon-Ra St. Broun','WR',93,26,14],['Jahmyr Gibz','RB',90,23,26],['Aiden Hutchinsn','DL',93,25,97],['Penei Sewel','OL',94,25,58]],
+  MIN: [['Justyn Jeffersn','WR',96,26,18],['Jordn Addisyn','WR',85,23,3],['Sam Darnld','QB',84,28,14],['T.J. Hockensn','TE',87,28,87]],
+  DAL: [['Dak Preskott','QB',87,32,4],['CeeDe Lam','WR',94,26,88],['Mika Parsonz','DL',95,26,11],['Trevon Digz','CB',87,27,7]],
+  MIA: [['Tua Tagovailo','QB',85,27,1],['Tyrek Hil','WR',94,31,10],['Jaylen Wadl','WR',87,26,17],['DeVon Achan','RB',86,24,28]],
+  HOU: [['C.J. Strowd','QB',89,24,7],['Niko Collinz','WR',91,26,12],['Will Andersn','DL',88,24,51],['Derek Stingli','CB',90,24,24]],
+  GB:  [['Jordn Luv','QB',88,27,10],['Jash Jakobs','RB',88,27,8],['Jaydn Reid','WR',84,25,11],['Xavier McKinny','S',90,26,29]],
+  WAS: [['Jaydn Danyels','QB',89,24,5],['Tery McLaurn','WR',89,30,17],['Boby Wagnr','LB',86,35,54]],
+  LAR: [['Mathew Staford','QB',88,37,9],['Puka Nakuwa','WR',91,24,17],['Kyren Willams','RB',86,25,23],['Jared Verz','DL',86,25,8]],
+  DEN: [['Bo Niks','QB',83,25,10],['Pat Surtayn','CB',95,25,2],['Kortland Suton','WR',85,30,14]],
+  PIT: [['T.J. Wott','DL',95,31,90],['Georj Picknz','WR',86,24,14],['Minkah Fitzpatrik','S',89,29,39]],
+  CLE: [['Mylez Garet','DL',96,29,95],['Denzl Warde','CB',89,28,21],['Jery Jeudi','WR',84,26,3]],
+  LV:  [['Max Krosby','DL',94,28,98],['Brok Bowrs','TE',90,23,89],['Jakobi Myrs','WR',83,29,16]],
+  NYJ: [['Saws Gardnr','CB',92,25,1],['Garet Wilsn','WR',89,25,5],['Brees Hal','RB',87,24,20],['Quinen Willams','DL',90,27,95]],
+  NE:  [['Drak May','QB',82,23,10],['Kristian Gonzalz','CB',88,23,0],['Rhamondre Stevnsn','RB',82,27,38]],
+  IND: [['Jonathn Taylr','RB',89,26,28],['Anthny Richrdsn','QB',80,23,5],['DeForst Bucknr','DL',88,31,99]],
+  JAX: [['Trevr Lawrnce','QB',84,26,16],['Brian Thoms','WR',87,23,7],['Jash Hines-Alen','DL',88,28,41]],
+  TEN: [['Jefry Simmonz','DL',89,28,98],['Kalvin Ridly','WR',84,30,0],['Tony Polard','RB',83,28,20]],
+  NYG: [['Malyk Naberz','WR',89,22,1],['Dekstr Lawrnce','DL',93,28,97],['Brian Burnz','DL',87,27,0]],
+  CHI: [['Kaleb Willams','QB',83,24,18],['D.J. Moor','WR',88,28,2],['Montez Swet','DL',86,29,98],['Jayln Johnsn','CB',89,26,1]],
+  TB:  [['Bakr Mayfeld','QB',86,30,6],['Myke Evanz','WR',90,32,13],['Antoin Winfeeld','S',91,27,31],['Tristn Wirfz','OL',93,26,78]],
+  ATL: [['Bijan Robinsn','RB',91,23,7],['Drak Londn','WR',87,24,5],['Jesy Batez','S',91,28,3],['Mykl Penix','QB',81,25,9]],
+  NO:  [['Alvn Kamara','RB',87,30,41],['Kris Olav','WR',86,25,12],['Demario Daviz','LB',86,36,56]],
+  CAR: [['Brys Yung','QB',79,24,9],['Chuba Hubard','RB',84,26,30],['Jaycee Hurn','CB',86,26,8],['Derik Broun','DL',88,27,95]],
+  ARI: [['Kylr Muray','QB',85,28,1],['Marvn Harison','WR',86,23,18],['Trey McBryde','TE',89,26,85],['Budda Bakr','S',89,29,3]],
+  SEA: [['D.K. Metkalf','WR',88,27,14],['Jaxn Smyth-Njigba','WR',87,23,11],['Keneth Walkr','RB',86,25,9],['Devon Witherpoon','CB',89,24,21]]
+};
+
+function renderTeamCrest(team, size = 40) {
+  const s = size, ac = team.accent || '#facc15';
+  let glyph = '';
+  if (team.icon === 'bolt') glyph = `<path d="M11,22 Q18,12 29,14 Q23,18 25,20 Q17,22 12,28 Q16,22 11,22 Z" fill="${ac}" stroke="#fff" stroke-width="0.9"/>`;
+  else if (team.icon === 'arrow') glyph = `<path d="M10,20 L26,11 L24,20 L26,29 Z" fill="#fff" stroke="${ac}" stroke-width="1.6"/>`;
+  else if (team.icon === 'shoe') glyph = `<path d="M13,12 V22 A7,7 0 0,0 27,22 V12" fill="none" stroke="${ac}" stroke-width="3.6" stroke-linecap="round"/>`;
+  else if (team.icon === 'horn') glyph = `<path d="M12,24 C10,14 22,10 28,18 C25,17 20,18 19,24" fill="none" stroke="${ac}" stroke-width="3.5" stroke-linecap="round"/>`;
+  else if (team.icon === 'triad') glyph = `<polygon points="20,9 23,14 20,19 17,14" fill="#facc15"/><polygon points="26,17 29,22 26,27 23,22" fill="#ef4444"/><polygon points="14,17 17,22 14,27 11,22" fill="#38bdf8"/>`;
+  else if (team.icon === 'bull') glyph = `<path d="M10,13 Q14,19 20,18 Q26,19 30,13 L26,25 L20,29 L14,25 Z" fill="${ac}" stroke="#fff" stroke-width="1"/>`;
+  else if (team.icon === 'bison') glyph = `<path d="M10,22 Q14,13 24,14 L30,20 L25,25 L12,25 Z" fill="#fff"/><path d="M12,20 L28,17" stroke="${ac}" stroke-width="2.6"/>`;
+  else if (team.icon === 'fin') glyph = `<path d="M10,25 Q18,11 29,19 Q21,21 18,26 Z" fill="#fff" stroke="${ac}" stroke-width="1.5"/>`;
+  else if (team.icon === 'jet') glyph = `<path d="M9,21 L29,14 L23,21 L29,26 Z" fill="${ac}"/>`;
+  else if (team.icon === 'stripes') glyph = `<path d="M11,14 L29,11 M10,20 L30,18 M11,26 L29,24" stroke="${ac}" stroke-width="3" stroke-linecap="round"/>`;
+  else if (team.icon === 'helmet') glyph = `<path d="M12,25 A9,9 0 1,1 28,23 L23,23 V26 H12 Z" fill="${ac}" stroke="#fff" stroke-width="1.2"/>`;
+  else if (team.icon === 'bird') glyph = `<path d="M10,16 L21,13 L30,19 L22,22 L15,27 L17,20 Z" fill="#f8fafc" stroke="${ac}" stroke-width="1.3"/>`;
+  else if (team.icon === 'saber') glyph = `<path d="M12,12 L28,28 M28,12 L12,28" stroke="${ac}" stroke-width="2.8" stroke-linecap="round"/><circle cx="20" cy="20" r="4" fill="#fff"/>`;
+  else if (team.icon === 'star') glyph = `<polygon points="20,9 23,17 31,17 24.5,22 27,30 20,25 13,30 15.5,22 9,17 17,17" fill="${ac}"/>`;
+  else if (team.icon === 'skyline') glyph = `<path d="M11,27 V17 H15 V27 M17,27 V12 H23 V27 M25,27 V19 H29 V27" fill="${ac}"/>`;
+  else if (team.icon === 'chevron') glyph = `<path d="M11,15 L20,22 L29,15 M11,22 L20,29 L29,22" fill="none" stroke="${ac}" stroke-width="3" stroke-linecap="round"/>`;
+  else if (team.icon === 'mane') glyph = `<path d="M13,25 C12,14 20,10 28,16 L24,25 Z" fill="${ac}" stroke="#fff" stroke-width="1.2"/>`;
+  else if (team.icon === 'oval') glyph = `<ellipse cx="20" cy="20" rx="12" ry="8" fill="none" stroke="${ac}" stroke-width="3"/><text x="20" y="23.5" text-anchor="middle" fill="#fff" font-size="9" font-weight="900">${team.id}</text>`;
+  else if (team.icon === 'fleur') glyph = `<path d="M20,10 C17,15 17,20 20,27 C23,20 23,15 20,10 M12,20 C16,17 24,17 28,20" fill="none" stroke="${ac}" stroke-width="2.6" stroke-linecap="round"/>`;
+  else if (team.icon === 'peak') glyph = `<path d="M9,27 L17,13 L22,21 L25,16 L31,27 Z" fill="${ac}"/>`;
+  else if (team.icon === 'claw') glyph = `<path d="M13,13 L17,27 M20,11 L20,28 M27,13 L23,27" stroke="${ac}" stroke-width="2.6" stroke-linecap="round"/>`;
+  else glyph = `<path d="M20,10 L29,14 V22 C29,26 24,29 20,31 C16,29 11,26 11,22 V14 Z" fill="none" stroke="${ac}" stroke-width="2.4"/>`;
+
+  return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" class="shrink-0 drop-shadow">
+    <circle cx="20" cy="20" r="18.5" fill="${team.color}" stroke="${ac}" stroke-width="2"/>
+    <circle cx="20" cy="20" r="15.5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+    ${glyph}
+  </svg>`;
+}
+
+function renderStars(rating) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5 ? 1 : 0;
+  let out = '';
+  for (let i = 0; i < 5; i++) {
+    if (i < full) out += '<span class="text-amber-400">★</span>';
+    else if (i === full && half) out += '<span class="text-amber-300/75">★</span>';
+    else out += '<span class="text-slate-600">★</span>';
+  }
+  return out;
+}
+
+const FIRST_NAMES = ['Marcus','Jalen','Trevor','Justin','Caleb','Drake','Lamar','Patrick','Josh','Joe','Brock','Dak','Tua','Jordan','Bryce','Anthony','Wesley','Vontae','Weston','Jaylin','Teague','Heath','Makoa','Derrick','Christian','Saquon','Bijan','Breece','Tyreek','JaMarr','CeeDee','Garrett','Puka','Malik','Travis','George','Sam','Micah','Myles','Nick','Maxx','Aidan','Fred','Roquan','Kyle','Derwin','Antoine','Harrison','Brandon','Evan','Jake','Trey','Devon','Ladd','Rashawn'];
+const LAST_NAMES = ['Vance','Sterling','Hawkins','Mercer','Yates','Houston','Bailey','Stewart','LaPorta','Sullivan','Mafi','Thornton','Kowalski','Delgado','Okafor','Caldwell','Bridges','Sutton','Hargrove','Whitaker','Benson','Ramirez','Cunningham','Keller','Tate','Alvarez','Garrison','Pryor','Browning','Sloan','Hendricks','Vaughn','Chambers','Fletcher','Lowe','Cross','Bates','Nolan','Frazier','Reyes','Porter','Jennings','Barrett','Horton','Graves','Wolfe','Malone','Dixon','Snyder','Kerr','Slater','Alt'];
+const TRAITS = {
+  QB: ['Field General', 'Gunslinger', 'Scrambler', 'Clutch'],
+  RB: ['Power Back', 'Elusive', 'Receiving Back', 'Workhorse'],
+  WR: ['Deep Threat', 'Route Tech', 'YAC Monster', 'Red Zone'],
+  TE: ['Blocking TE', 'Seam Stretcher', 'Possession'],
+  OL: ['Run Blocker', 'Pass Protector', 'Anchor'],
+  DL: ['Pass Rusher', 'Run Stopper', 'Power Move'],
+  LB: ['Run Stopper', 'Coverage LB', 'Blitzer'],
+  CB: ['Man Cover', 'Ball Hawk', 'Zone Lock'],
+  S:  ['Center Fielder', 'Box Safety', 'Big Hitter'],
+  K:  ['Big Leg', 'Clutch Kicker'], P: ['Coffin Corner'], LS: ['Consistent']
+};
+
+const ROSTER_TEMPLATE = [
+  ['QB', 3], ['RB', 4], ['WR', 6], ['TE', 3], ['OL', 9],
+  ['DL', 9], ['LB', 7], ['CB', 5], ['S', 4], ['K', 1], ['P', 1], ['LS', 1]
+];
+
+const OFF_SCHEMES = {
+  'West Coast': { label: '웨스트 코스트 (West Coast)', desc: '짧고 빠른 슬랜트·스크린 패스 위주로 높은 성공률과 YAC를 노립니다.', passBias: 0.60, passCmpMod: +0.03, passYdsMod: -0.4, rushMod: +0.2, intMod: -0.004 },
+  'Air Raid':   { label: '에어 레이드 (Air Raid)', desc: '4~5명의 리시버를 넓게 벌려 중장거리 패스로 폭발적인 빅플레이를 만듭니다.', passBias: 0.70, passCmpMod: -0.01, passYdsMod: +2.0, rushMod: -0.4, intMod: +0.007 },
+  'Power Run':  { label: '파워 런 / 스매시마우스', desc: '강력한 OL과 RB로 러싱을 밀어붙여 점유 시간(TOP)을 지배하고 턴오버를 줄입니다.', passBias: 0.45, passCmpMod: +0.01, passYdsMod: +0.5, rushMod: +0.8, intMod: -0.005 },
+  'Spread RPO': { label: '스프레드 RPO (Spread Option)', desc: '런-패스 옵션과 기동성 좋은 QB를 결합해 수비의 리드를 흔듭니다.', passBias: 0.56, passCmpMod: +0.015, passYdsMod: +0.7, rushMod: +0.5, intMod: 0 }
+};
+
+const DEF_SCHEMES = {
+  '4-3 Base':   { label: '4-3 베이스 (4-3 Base)', desc: '4명의 DL과 3명의 LB가 균형 있게 런과 패스를 모두 견제하는 정통 수비입니다.', sackMod: 0.0, passDefMod: 0.0, rushDefMod: +0.3, intMod: 0.0 },
+  '3-4 Blitz':  { label: '3-4 블리츠 헤비', desc: '라인배커 돌격으로 QB 압박과 색(Sack)을 극대화하지만 딥 패스 리스크가 있습니다.', sackMod: +0.025, passDefMod: -0.8, rushDefMod: +0.2, intMod: +0.005 },
+  'Cover 2':    { label: '커버 2 / 탬파 2', desc: '두 명의 세이프티가 깊은 지역을 철저히 막아 빅플레이를 차단합니다.', sackMod: -0.01, passDefMod: +1.2, rushDefMod: -0.4, intMod: +0.004 },
+  'Nickel Man': { label: '니켈 맨 프레스', desc: '코너백 3명을 배치해 리시버를 밀착 마크하며 패스 성공률을 억제합니다.', sackMod: +0.005, passDefMod: +1.6, rushDefMod: -0.8, intMod: +0.006 }
+};
+
+// Full Madden/FM Playbook (12 Offense + 9 Defense + Special Teams)
+const OFF_PLAYS = [
+  { id: 'Slants',           engineKey: 'Quick Slant',  cat: 'SHORT',  sub: 'Short Pass / Pistol',       formation: 'Pistol',          personnel: '11 Personnel', ko: '슬랜트 (Slants)',         desc: 'WR 안쪽 슬랜트 + RB 체크다운 빠른 전개', ydsMod: +0.3, art: 'slant' },
+  { id: 'Mesh',             engineKey: 'Quick Slant',  cat: 'SHORT',  sub: 'Short Pass / Shotgun',      formation: 'Shotgun Bunch',   personnel: '11 Personnel', ko: '메쉬 크로싱 (Mesh)',      desc: '두 리시버가 중앙 교차하며 맨투맨 파괴', ydsMod: +0.4, art: 'mesh' },
+  { id: 'Stick',            engineKey: 'Quick Slant',  cat: 'SHORT',  sub: 'Short Pass / Pistol',       formation: 'Pistol Trips',    personnel: '11 Personnel', ko: '스틱 컨셉 (Stick)',       desc: 'TE 스틱 + WR 플랫 하이-로우 리드',      ydsMod: +0.3, art: 'stick' },
+  { id: 'HB Dive',          engineKey: 'Inside Run',   cat: 'RUN',    sub: 'Run / I-Form Pro',          formation: 'I-Form Pro',      personnel: '21 Personnel', ko: 'HB 다이브 (중앙 돌파)',   desc: '풀백 리드 블로킹 뒤 A-갭 정면 돌파',    ydsMod: +0.2, art: 'dive' },
+  { id: 'HB Stretch',       engineKey: 'Outside Zone', cat: 'RUN',    sub: 'Run / Singleback Ace',      formation: 'Singleback Ace',  personnel: '12 Personnel', ko: 'HB 스트레치 (사이드)',    desc: 'OL 측면 존 블로킹으로 엣지 돌파',       ydsMod: +0.4, art: 'stretch' },
+  { id: 'HB Counter Trap',  engineKey: 'Inside Run',   cat: 'RUN',    sub: 'Run / I-Form Twin',         formation: 'I-Form Twin',     personnel: '21 Personnel', ko: 'HB 카운터 트랩',          desc: '역방향 페이크 후 가드 풀링 돌파',       ydsMod: +0.4, art: 'counter' },
+  { id: 'RPO Read Option',  engineKey: 'Outside Zone', cat: 'PA',     sub: 'Play Action / RPO',         formation: 'Shotgun Spread',  personnel: '11 Personnel', ko: 'RPO 리드 옵션',           desc: 'DE 반응 보고 RB 핸드오프/QB 킵 선택',   ydsMod: +0.5, art: 'rpo' },
+  { id: 'WR Bubble Screen', engineKey: 'Screen Pass',  cat: 'SCREEN', sub: 'Screen / Shotgun Spread',   formation: 'Shotgun Spread',  personnel: '11 Personnel', ko: 'WR 버블 스크린',          desc: '블리츠 역이용 사이드라인 스크린',       ydsMod: +0.3, art: 'bubble' },
+  { id: 'HB Slip Screen',   engineKey: 'Screen Pass',  cat: 'SCREEN', sub: 'Screen / Shotgun Doubles',  formation: 'Shotgun Doubles', personnel: '11 Personnel', ko: 'HB 슬립 스크린',          desc: 'DL 통과 유도 후 RB에게 스크린 패스',    ydsMod: +0.5, art: 'hbscreen' },
+  { id: 'PA Boot Over',     engineKey: 'Play Action',  cat: 'PA',     sub: 'Play Action / Singleback',  formation: 'Singleback Tight',personnel: '12 Personnel', ko: 'PA 부트 오버',            desc: '런 페이크 후 QB 롤아웃·크로싱 패스',    ydsMod: +0.6, art: 'paboot' },
+  { id: 'PA Crossers',      engineKey: 'Play Action',  cat: 'MEDIUM', sub: 'Medium Pass / Under Center',formation: 'Under Center I',  personnel: '21 Personnel', ko: 'PA 크로서스',             desc: '플레이액션 후 중거리 2단 크로스',       ydsMod: +0.5, art: 'pacross' },
+  { id: 'Four Verticals',   engineKey: 'Deep Shot',    cat: 'DEEP',   sub: 'Deep Pass / Shotgun Spread',formation: 'Shotgun 5-Wide',  personnel: '10 Personnel', ko: '포 버티컬스 (4 Verts)',   desc: '4명 동시 직선 딥 루트로 존 수비 분쇄',  ydsMod: +0.6, art: 'verts' },
+  { id: 'Deep Post Corner', engineKey: 'Deep Shot',    cat: 'DEEP',   sub: 'Deep Pass / Shotgun Trips', formation: 'Shotgun Trips',   personnel: '11 Personnel', ko: '딥 포스트 / 코너',        desc: '세이프티 시선 분산 후 장거리 빅플레이', ydsMod: +0.7, art: 'deeppost' },
+  { id: 'Field Goal',       engineKey: 'FG',           cat: 'SPECIAL',sub: 'Special Teams / Kick',      formation: 'FG Unit',         personnel: 'Special Teams',ko: '필드골 시도 (3점)',       desc: '현재 위치에서 필드골 킥 시도',          ydsMod: 0,    art: 'fg' },
+  { id: 'Punt',             engineKey: 'PUNT',         cat: 'SPECIAL',sub: 'Special Teams / Punt',      formation: 'Punt Unit',       personnel: 'Special Teams',ko: '펀트 (필드 포지션)',      desc: '상대 진영 깊숙이 펀트 킥',              ydsMod: 0,    art: 'punt' },
+];
+
+const DEF_PLAYS = [
+  { id: 'Cover 3 Sky',      engineKey: 'Zone Coverage', cat: 'ZONE',  sub: 'Zone / 4-3 Under',       formation: '4-3 Under',       personnel: '4-3 Base',    ko: '커버 3 스카이',          desc: '3딥 존 + 강세이프티 박스 지원 균형형', art: 'cover3' },
+  { id: 'Cover 2 Tampa 2',  engineKey: 'Zone Coverage', cat: 'ZONE',  sub: 'Zone / Nickel 4-2-5',    formation: 'Nickel 4-2-5',    personnel: 'Nickel',      ko: '커버 2 / 탬파 2',        desc: '2딥 세이프티 + MLB 중앙 딥 드롭',      art: 'cover2' },
+  { id: 'Cover 4 Quarters', engineKey: 'Zone Coverage', cat: 'ZONE',  sub: 'Zone / Nickel 2-4-5',    formation: 'Nickel 2-4-5',    personnel: 'Nickel',      ko: '커버 4 쿼터스',          desc: '4딥 존으로 딥 샷·플레이액션 차단',     art: 'cover4' },
+  { id: '4-3 Run Blitz',    engineKey: 'Run Stuff',     cat: 'RUN',   sub: 'Run Stop / 4-3 Over',    formation: '4-3 Over',        personnel: '4-3 Base',    ko: '4-3 런 블리츠',          desc: '8명 박스 배치로 러싱 갭 완전 봉쇄',    art: 'runblitz' },
+  { id: 'Cover 1 Robber',   engineKey: 'Man Press',     cat: 'MAN',   sub: 'Man / 4-3 Base',         formation: '4-3 Base',        personnel: '4-3 Base',    ko: '커버 1 로버 (Man)',      desc: '맨투맨 + 중앙 로버 세이프티 인터셉트', art: 'cover1' },
+  { id: '2-Man Under',      engineKey: 'Man Press',     cat: 'MAN',   sub: 'Man / Nickel Man',       formation: 'Nickel Man',      personnel: 'Nickel',      ko: '2-맨 언더 (Man+2Deep)',  desc: '강력한 맨 프레스 + 2딥 보험 수비',     art: '2man' },
+  { id: 'Mid Blitz 0',      engineKey: 'Zone Blitz',    cat: 'BLITZ', sub: 'Blitz / Nickel Double A',formation: 'Nickel Double A', personnel: 'Nickel',      ko: '미드 블리츠 (Cover 0)',  desc: '양쪽 A-갭 올아웃 블리츠·색 극대화',    art: 'midblitz' },
+  { id: 'Edge Fire Zone 3', engineKey: 'Zone Blitz',    cat: 'BLITZ', sub: 'Blitz / 3-4 Odd',        formation: '3-4 Odd',         personnel: '3-4 Base',    ko: '엣지 파이어 존 3',       desc: 'OLB 엣지 블리츠 + 3딥 존 안전 커버',   art: 'firezone' },
+  { id: 'Prevent 3-Deep',   engineKey: 'Prevent',       cat: 'ZONE',  sub: 'Prevent / Dime 1-4-6',   formation: 'Dime 1-4-6',      personnel: 'Dime (6 DB)', ko: '프리벤트 3-딥',          desc: '6DB 배치로 종료 직전 딥 패스 봉쇄',    art: 'prevent' },
+];
+
+const PLAY_MATRIX = {
+  'Inside Run':   { 'Run Stuff': -1.8, 'Zone Coverage': +1.1, 'Man Press': +0.8, 'Zone Blitz': +0.3, 'Prevent': +2.4 },
+  'Outside Zone': { 'Run Stuff': -1.0, 'Zone Coverage': +0.9, 'Man Press': +1.1, 'Zone Blitz': -0.8, 'Prevent': +2.2 },
+  'Quick Slant':  { 'Run Stuff': +1.5, 'Zone Coverage': +0.3, 'Man Press': -1.2, 'Zone Blitz': +2.0, 'Prevent': +1.8 },
+  'Screen Pass':  { 'Run Stuff': -0.8, 'Zone Coverage': -0.5, 'Man Press': +0.6, 'Zone Blitz': +3.1, 'Prevent': +1.2 },
+  'Play Action':  { 'Run Stuff': +2.8, 'Zone Coverage': +0.4, 'Man Press': +0.5, 'Zone Blitz': -1.6, 'Prevent': -1.2 },
+  'Deep Shot':    { 'Run Stuff': +3.2, 'Zone Coverage': -1.5, 'Man Press': +0.8, 'Zone Blitz': -2.0, 'Prevent': -3.5 },
+};
+
+// Web Audio API SFX
+const SoundFX = {
+  ctx: null, enabled: true,
+  init() {
+    if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(freq, dur, type = 'sine', vol = 0.07, delay = 0) {
+    if (!this.enabled) return;
+    this.init(); if (!this.ctx) return;
+    const now = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, now);
+    g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    osc.connect(g); g.connect(this.ctx.destination);
+    osc.start(now); osc.stop(now + dur);
+  },
+  snap() { this.tone(135, 0.07, 'triangle', 0.09); },
+  whistle() { this.tone(2650, 0.13, 'sine', 0.045, 0); this.tone(2790, 0.15, 'sine', 0.045, 0.08); },
+  firstDown() { this.tone(523, 0.1, 'triangle', 0.06, 0); this.tone(659, 0.15, 'triangle', 0.06, 0.09); },
+  touchdown() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.22, 'sawtooth', 0.045, i * 0.09)); },
+  turnover() { this.tone(240, 0.18, 'sawtooth', 0.06, 0); this.tone(170, 0.28, 'sawtooth', 0.06, 0.15); }
+};
+
+// ============================================================================
+// 2. MADDEN/FM PLAY ART SVG GENERATOR (MATCHING MOCKUP CARDS)
+// ============================================================================
+function renderPlayArtSVG(side, art, flip = false) {
+  const w = 160, h = 84;
+  const losY = side === 'off' ? 56 : 30;
+  const uid = `pa_${side}_${art}_${flip ? 'f' : 'n'}_${Math.floor(Math.random()*9999)}`;
+  const flipG = flip ? `transform="translate(${w},0) scale(-1,1)"` : '';
+  const defs = `
+    <defs>
+      <marker id="${uid}_o" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f59e0b"/></marker>
+      <marker id="${uid}_b" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#38bdf8"/></marker>
+      <marker id="${uid}_g" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#22c55e"/></marker>
+      <marker id="${uid}_r" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#ef4444"/></marker>
+    </defs>`;
+  const bg = `
+    <rect width="${w}" height="${h}" rx="5" fill="#0c1526"/>
+    <line x1="0" y1="${losY}" x2="${w}" y2="${losY}" stroke="rgba(148,163,184,0.32)" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+  let inner = '';
+  if (side === 'off') {
+    const ol = [66, 73, 80, 87, 94].map((x, idx) => idx === 2
+      ? `<rect x="${x-2.6}" y="${losY+1.5}" width="5.2" height="5.2" fill="#cbd5e1"/>`
+      : `<circle cx="${x}" cy="${losY+4}" r="2.6" fill="#cbd5e1"/>`).join('');
+    const qb = `<circle cx="80" cy="${losY+14}" r="2.8" fill="#f59e0b"/>`;
+    let r = '';
+    if (art === 'slant') {
+      r = `<circle cx="24" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="136" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="110" cy="${losY+6}" r="2.5" fill="#f59e0b"/><circle cx="70" cy="${losY+15}" r="2.5" fill="#f59e0b"/>
+        <path d="M24,${losY+4} L24,${losY-8} L56,${losY-20}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M136,${losY+4} L136,${losY-8} L106,${losY-20}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M110,${losY+6} L110,${losY-10} L82,${losY-16}" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M70,${losY+15} Q90,${losY+10} 102,${losY-4}" stroke="#f59e0b" stroke-width="1.5" fill="none" marker-end="url(#${uid}_o)"/>`;
+    } else if (art === 'mesh') {
+      r = `<circle cx="22" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="108" cy="${losY+5}" r="2.5" fill="#f59e0b"/><circle cx="70" cy="${losY+16}" r="2.5" fill="#f59e0b"/>
+        <path d="M22,${losY+4} L22,${losY-10} L134,${losY-10}" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M108,${losY+5} L108,${losY-14} L42,${losY-14}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M138,${losY+4} L138,${losY-24} L124,${losY-32}" stroke="#38bdf8" stroke-width="1.5" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'stick') {
+      r = `<circle cx="22" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="106" cy="${losY+4}" r="2.5" fill="#f59e0b"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="70" cy="${losY+15}" r="2.5" fill="#f59e0b"/>
+        <path d="M106,${losY+4} L106,${losY-14} L114,${losY-14}" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M138,${losY+4} L138,${losY-26}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M22,${losY+4} L22,${losY-14} L30,${losY-14}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M70,${losY+15} L124,${losY-2}" stroke="#f59e0b" stroke-width="1.5" fill="none" marker-end="url(#${uid}_o)"/>`;
+    } else if (art === 'dive') {
+      r = `<circle cx="80" cy="${losY+22}" r="2.8" fill="#ef4444"/><path d="M80,${losY+22} L80,${losY-20}" stroke="#ef4444" stroke-width="2.4" fill="none" marker-end="url(#${uid}_r)"/><path d="M73,${losY+4} L68,${losY-8} M87,${losY+4} L92,${losY-8}" stroke="#38bdf8" stroke-width="1.4"/>`;
+    } else if (art === 'stretch') {
+      r = `<circle cx="80" cy="${losY+22}" r="2.8" fill="#ef4444"/><path d="M80,${losY+22} Q112,${losY+18} 134,${losY-18}" stroke="#ef4444" stroke-width="2.4" fill="none" marker-end="url(#${uid}_r)"/><path d="M94,${losY+4} L118,${losY-6}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'counter') {
+      r = `<circle cx="80" cy="${losY+22}" r="2.8" fill="#ef4444"/><path d="M80,${losY+22} L64,${losY+18} L98,${losY-18}" stroke="#ef4444" stroke-width="2.4" fill="none" marker-end="url(#${uid}_r)"/><path d="M66,${losY+4} Q82,${losY+11} 102,${losY-6}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'rpo') {
+      r = `<circle cx="67" cy="${losY+15}" r="2.6" fill="#ef4444"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#f59e0b"/>
+        <path d="M67,${losY+15} Q90,${losY+10} 102,${losY-16}" stroke="#ef4444" stroke-width="2.2" fill="none" marker-end="url(#${uid}_r)"/>
+        <path d="M80,${losY+14} L46,${losY-10}" stroke="#38bdf8" stroke-width="1.6" stroke-dasharray="3,2" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M138,${losY+4} L138,${losY-10} L116,${losY-20}" stroke="#f59e0b" stroke-width="1.7" fill="none" marker-end="url(#${uid}_o)"/>`;
+    } else if (art === 'bubble' || art === 'hbscreen') {
+      r = `<circle cx="116" cy="${losY+6}" r="2.6" fill="#f59e0b"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="22" cy="${losY+4}" r="2.5" fill="#38bdf8"/>
+        <path d="M116,${losY+6} Q130,${losY+14} 144,${losY-12}" stroke="#f59e0b" stroke-width="2.2" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M138,${losY+4} L132,${losY-10}" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M22,${losY+4} L22,${losY-30}" stroke="#38bdf8" stroke-width="1.5" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'paboot' || art === 'pacross') {
+      r = `<circle cx="22" cy="${losY+4}" r="2.5" fill="#f59e0b"/><circle cx="106" cy="${losY+4}" r="2.5" fill="#22c55e"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#38bdf8"/>
+        <path d="M22,${losY+4} L22,${losY-14} L130,${losY-30}" stroke="#f59e0b" stroke-width="2.1" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M106,${losY+4} L106,${losY-8} L144,${losY-12}" stroke="#22c55e" stroke-width="1.7" fill="none" marker-end="url(#${uid}_g)"/>
+        <path d="M138,${losY+4} L138,${losY-38}" stroke="#38bdf8" stroke-width="1.5" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'verts') {
+      r = `<circle cx="22" cy="${losY+4}" r="2.5" fill="#38bdf8"/><circle cx="52" cy="${losY+6}" r="2.5" fill="#38bdf8"/><circle cx="106" cy="${losY+5}" r="2.5" fill="#22c55e"/><circle cx="138" cy="${losY+4}" r="2.5" fill="#38bdf8"/>
+        <path d="M22,${losY+4} L22,${losY-42}" stroke="#38bdf8" stroke-width="1.7" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M52,${losY+6} L56,${losY-42}" stroke="#38bdf8" stroke-width="1.7" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M106,${losY+5} L96,${losY-42}" stroke="#f59e0b" stroke-width="2.1" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M138,${losY+4} L138,${losY-42}" stroke="#38bdf8" stroke-width="1.7" fill="none" marker-end="url(#${uid}_b)"/>`;
+    } else if (art === 'fg' || art === 'punt') {
+      r = `<circle cx="80" cy="${losY+22}" r="2.8" fill="#f59e0b"/><path d="M80,${losY+22} L80,${losY-40}" stroke="#f59e0b" stroke-width="2.2" stroke-dasharray="4,3" fill="none" marker-end="url(#${uid}_o)"/>`;
+    } else {
+      r = `<circle cx="22" cy="${losY+4}" r="2.5" fill="#f59e0b"/><circle cx="118" cy="${losY+6}" r="2.5" fill="#38bdf8"/><circle cx="140" cy="${losY+4}" r="2.5" fill="#22c55e"/>
+        <path d="M22,${losY+4} L22,${losY-20} L76,${losY-42}" stroke="#f59e0b" stroke-width="2.1" fill="none" marker-end="url(#${uid}_o)"/>
+        <path d="M118,${losY+6} L118,${losY-18} L148,${losY-36}" stroke="#38bdf8" stroke-width="1.7" fill="none" marker-end="url(#${uid}_b)"/>
+        <path d="M140,${losY+4} L140,${losY-12} L106,${losY-14}" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#${uid}_g)"/>`;
+    }
+    inner = ol + qb + r;
+  } else {
+    const dl = [66, 75, 85, 94].map(x => `<circle cx="${x}" cy="${losY-4}" r="2.6" fill="#cbd5e1"/>`).join('');
+    let d = '';
+    if (art === 'runblitz' || art === 'midblitz') {
+      d = `<path d="M56,${losY-10} L68,${losY+18}" stroke="#ef4444" stroke-width="2.2" fill="none" marker-end="url(#${uid}_r)"/>
+           <path d="M80,${losY-14} L80,${losY+20}" stroke="#ef4444" stroke-width="2.2" fill="none" marker-end="url(#${uid}_r)"/>
+           <path d="M104,${losY-10} L92,${losY+18}" stroke="#ef4444" stroke-width="2.2" fill="none" marker-end="url(#${uid}_r)"/>`;
+    } else if (art === 'cover1' || art === '2man') {
+      d = `<ellipse cx="${art==='2man'?48:80}" cy="${losY-19}" rx="${art==='2man'?30:40}" ry="7" fill="rgba(56,189,248,0.25)" stroke="#38bdf8" stroke-width="1.2"/>
+           ${art==='2man' ? `<ellipse cx="112" cy="${losY-19}" rx="30" ry="7" fill="rgba(56,189,248,0.25)" stroke="#38bdf8" stroke-width="1.2"/>` : ''}
+           <line x1="24" y1="${losY-6}" x2="24" y2="${losY+16}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2"/>
+           <line x1="136" y1="${losY-6}" x2="136" y2="${losY+16}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+    } else if (art === 'firezone') {
+      d = `<path d="M46,${losY-9} L72,${losY+18}" stroke="#ef4444" stroke-width="2.1" fill="none" marker-end="url(#${uid}_r)"/>
+           <path d="M114,${losY-9} L88,${losY+18}" stroke="#ef4444" stroke-width="2.1" fill="none" marker-end="url(#${uid}_r)"/>
+           <ellipse cx="32" cy="${losY-20}" rx="22" ry="7" fill="rgba(56,189,248,0.24)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="80" cy="${losY-20}" rx="26" ry="7" fill="rgba(56,189,248,0.24)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="128" cy="${losY-20}" rx="22" ry="7" fill="rgba(56,189,248,0.24)" stroke="#38bdf8" stroke-width="1.2"/>`;
+    } else if (art === 'cover2') {
+      d = `<ellipse cx="46" cy="${losY-20}" rx="34" ry="8" fill="rgba(56,189,248,0.26)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="114" cy="${losY-20}" rx="34" ry="8" fill="rgba(56,189,248,0.26)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="80" cy="${losY-10}" rx="18" ry="5.5" fill="rgba(250,204,21,0.25)" stroke="#facc15" stroke-width="1.1"/>
+           <ellipse cx="26" cy="${losY-6}" rx="15" ry="5" fill="rgba(192,132,252,0.25)" stroke="#c084fc" stroke-width="1.1"/>
+           <ellipse cx="134" cy="${losY-6}" rx="15" ry="5" fill="rgba(192,132,252,0.25)" stroke="#c084fc" stroke-width="1.1"/>`;
+    } else {
+      d = `<ellipse cx="30" cy="${losY-20}" rx="24" ry="8" fill="rgba(56,189,248,0.26)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="80" cy="${losY-21}" rx="28" ry="8" fill="rgba(56,189,248,0.26)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="130" cy="${losY-20}" rx="24" ry="8" fill="rgba(56,189,248,0.26)" stroke="#38bdf8" stroke-width="1.2"/>
+           <ellipse cx="52" cy="${losY-8}" rx="20" ry="5" fill="rgba(250,204,21,0.22)" stroke="#facc15" stroke-width="1"/>
+           <ellipse cx="108" cy="${losY-8}" rx="20" ry="5" fill="rgba(250,204,21,0.22)" stroke="#facc15" stroke-width="1"/>`;
+    }
+    inner = dl + d;
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto block">${defs}${bg}<g ${flipG}>${inner}</g></svg>`;
+}
+
+// ============================================================================
+// 3. UTILITIES & LEAGUE / PLAYER GENERATION
+// ============================================================================
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function gaussian(mean, std) {
+  let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random();
+  return mean + std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+function fmtClock(sec) { const s = Math.max(0, Math.floor(sec)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+function ovrClass(ovr) { return ovr >= 85 ? 'ovr-elite' : ovr >= 78 ? 'ovr-good' : ovr >= 70 ? 'ovr-avg' : 'ovr-low'; }
+function ordinal(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : '4th'; }
+function fmtYardLine(yl, offAbbr, defAbbr) { return yl === 50 ? '50 YD' : yl < 50 ? `${offAbbr} ${yl}` : `${defAbbr} ${100 - yl}`; }
+function emptyStats() { return { passAtt:0, passCmp:0, passYds:0, passTD:0, ints:0, rushAtt:0, rushYds:0, rushTD:0, rec:0, recYds:0, recTD:0, tackles:0, sacks:0, defInt:0, fgAtt:0, fgMade:0 }; }
+function calcPasserRating(st) {
+  if (!st || !st.passAtt) return '0.0';
+  const a = clamp(((st.passCmp / st.passAtt) - 0.3) * 5, 0, 2.375);
+  const b = clamp(((st.passYds / st.passAtt) - 3) * 0.25, 0, 2.375);
+  const c = clamp((st.passTD / st.passAtt) * 20, 0, 2.375);
+  const d = clamp(2.375 - ((st.ints / st.passAtt) * 25), 0, 2.375);
+  return (((a + b + c + d) / 6) * 100).toFixed(1);
+}
+function generateStaffMember(role) {
+  const specs = { OC: ['Air Raid Guru','Run Game Architect','West Coast Mind','QB Whisperer'], DC: ['Blitz Mastermind','Zone Lock Specialist','Front-7 Strategist','Ball-Hawk Coach'], SCOUT: ['Draft Diamond Finder','Combine Analyst','College Pipeline'], TRAINER: ['Rehab Specialist','Sports Science','Injury Prevention'] };
+  const stars = clamp(Math.round((2.5 + Math.random() * 2.5) * 2) / 2, 2.5, 5.0);
+  return {
+    id: GLOBAL_PID++, role,
+    name: `${FIRST_NAMES[rand(0, FIRST_NAMES.length - 1)]} ${LAST_NAMES[rand(0, LAST_NAMES.length - 1)]}`,
+    stars, spec: specs[role][rand(0, specs[role].length - 1)],
+    bonus: Math.round((stars - 2.0) * 1.4 * 10) / 10
+  };
+}
+
+let GLOBAL_PID = 1000;
+function createPlayer(pos, tier = 'starter', ageOverride = null) {
+  const baseMean = tier === 'star' ? 87 : tier === 'starter' ? 78 : tier === 'backup' ? 70 : tier === 'rookie_top' ? 79 : tier === 'rookie_mid' ? 72 : 65;
+  const ovr = clamp(Math.round(gaussian(baseMean, 4.2)), 58, 97);
+  const age = ageOverride || rand(21, 33);
+  const pot = clamp(ovr + (age <= 23 ? rand(5, 14) : age <= 26 ? rand(1, 6) : 0), ovr, 99);
+  const salaryBase = pos === 'QB' ? 1.65 : ['WR','DL','CB','OL'].includes(pos) ? 1.15 : ['K','P','LS'].includes(pos) ? 0.35 : 0.9;
+  const salary = Math.round(Math.max(0.9, Math.pow(Math.max(1, ovr - 60) / 10, 2.05) * 2.05 * salaryBase) * 10) / 10;
+  const years = rand(1, 4);
+  const guaranteed = Math.round(salary * years * (ovr >= 80 ? 0.5 : 0.25) * 10) / 10;
+  const numRanges = { QB:[1,19], RB:[20,39], WR:[1,19], TE:[80,89], OL:[50,79], DL:[90,99], LB:[40,59], CB:[20,39], S:[20,45], K:[1,19], P:[1,19], LS:[45,59] };
+  const [nLo, nHi] = numRanges[pos] || [1, 99];
+  const traits = TRAITS[pos] || ['Balanced'];
+  return {
+    id: GLOBAL_PID++,
+    jersey: rand(nLo, nHi),
+    name: `${FIRST_NAMES[rand(0, FIRST_NAMES.length - 1)]} ${LAST_NAMES[rand(0, LAST_NAMES.length - 1)]}`,
+    pos, age, ovr, pot,
+    trait: traits[rand(0, traits.length - 1)],
+    attrs: { spd: clamp(ovr+rand(-7,7),50,99), str: clamp(ovr+rand(-7,7),50,99), awr: clamp(ovr+rand(-6,7),50,99), skl: clamp(ovr+rand(-5,7),50,99) },
+    salary, years, guaranteed, morale: rand(72, 96), injuredWeeks: 0, peakOvr: ovr, seasonsPlayed: 0, restructured: false, franchiseTagged: false, stats: emptyStats(), careerStats: emptyStats()
+  };
+}
+
+function calcDeadCap(p) { return Math.round((p.guaranteed * 0.45) * 10) / 10; }
+function getTeamCapUsed(t) { return Math.round((t.roster.reduce((s, p) => s + p.salary, 0) + t.deadCap) * 10) / 10; }
+function getTeamCapSpace(t) { return Math.round((getSalaryCap() - getTeamCapUsed(t)) * 10) / 10; }
+function sortDepthChart(team) {
+  const order = ['QB','RB','WR','TE','OL','DL','LB','CB','S','K','P','LS'];
+  team.roster.sort((a, b) => (order.indexOf(a.pos) - order.indexOf(b.pos)) || (b.ovr - a.ovr));
+}
+function getTeamRatings(team) {
+  const best = (pos, n = 1) => {
+    const arr = team.roster.filter(p => p.pos === pos && p.injuredWeeks === 0);
+    if (!arr.length) return 60;
+    const sl = arr.slice(0, n);
+    return sl.reduce((s, p) => s + p.ovr, 0) / sl.length;
+  };
+  const passOff = best('QB',1)*0.45 + best('WR',3)*0.3 + best('TE',1)*0.1 + best('OL',5)*0.15;
+  const rushOff = best('RB',1)*0.45 + best('OL',5)*0.45 + best('TE',1)*0.1;
+  const passDef = best('CB',2)*0.35 + best('S',2)*0.25 + best('DL',4)*0.25 + best('LB',2)*0.15;
+  const rushDef = best('DL',4)*0.45 + best('LB',3)*0.35 + best('S',2)*0.2;
+  const kicker = best('K',1);
+  const ocB = (team.staff && team.staff.OC) ? team.staff.OC.bonus * 0.65 : 0;
+  const dcB = (team.staff && team.staff.DC) ? team.staff.DC.bonus * 0.65 : 0;
+  const off = clamp(Math.round((passOff + rushOff) / 2 + ocB), 55, 99);
+  const def = clamp(Math.round((passDef + rushDef) / 2 + dcB), 55, 99);
+  return { passOff, rushOff, passDef, rushDef, kicker, off, def, ovr: Math.round((off + def) / 2) };
+}
+
+function generateSchedule(teams) {
+  const schedule = Array.from({ length: 18 }, () => []);
+  const ids = teams.map(t => t.id);
+  const byeMap = {};
+  ids.forEach((id, idx) => { byeMap[id] = 5 + (idx % 10); });
+  for (let w = 1; w <= 18; w++) {
+    const pool = ids.filter(id => byeMap[id] !== w).sort(() => Math.random() - 0.5);
+    while (pool.length >= 2) schedule[w - 1].push({ week: w, home: pool.pop(), away: pool.pop(), played: false, homeScore: 0, awayScore: 0 });
+  }
+  return schedule;
+}
+
+function generateDraftClass() {
+  const positions = ['QB','RB','WR','WR','TE','OL','OL','DL','DL','LB','CB','CB','S','K'];
+  const rookies = [];
+  for (let i = 0; i < 120; i++) {
+    const p = createPlayer(positions[rand(0, positions.length - 1)], i < 24 ? 'rookie_top' : i < 70 ? 'rookie_mid' : 'backup', rand(21, 23));
+    p.salary = i < 15 ? 6.5 : i < 32 ? 3.8 : i < 64 ? 1.8 : 1.0; p.years = 4; p.guaranteed = Math.round(p.salary * 2.2 * 10) / 10;
+    p.scoutGrade = p.ovr >= 80 ? 'A+ (즉시 주전감)' : p.ovr >= 75 ? 'A- (1라운드 유망주)' : p.ovr >= 70 ? 'B+ (로테이션급)' : 'C+ (육성 자원)';
+    rookies.push(p);
+  }
+  return rookies.sort((a, b) => (b.ovr + b.pot * 0.4) - (a.ovr + a.pot * 0.4));
+}
+
+function generateFreeAgents() {
+  const positions = ['QB','RB','WR','TE','OL','DL','LB','CB','S','K','P'];
+  return Array.from({ length: 45 }, (_, i) => {
+    const p = createPlayer(positions[i % positions.length], Math.random() < 0.25 ? 'starter' : 'backup', rand(24, 34));
+    p.years = rand(1, 3); return p;
+  }).sort((a, b) => b.ovr - a.ovr);
+}
+
+// ============================================================================
+// 4. GLOBAL GAME STATE
+// ============================================================================
+let STATE = null;
+let SCREEN = 'OFFICE'; // 'NEW_CAREER' | 'OFFICE' | 'MATCH'
+let OFFICE_TAB = 'office'; // office | inbox | roster | playbook | training | schedule | scouting | standings | front_office
+let INBOX_CAT = 'ALL';
+let SELECTED_INBOX_ID = null;
+let GM_SUBTAB = 'cap';
+let ROSTER_FILTER = 'ALL';
+let PLAYBOOK_SIDE = 'off';
+let TRADE_PARTNER_ID = 'KC';
+let TRADE_USER_ASSETS = [];
+let TRADE_AI_ASSETS = [];
+let NEW_CAREER_COACH = 'Cole Harper';
+let NEW_CAREER_TEAM = 'LAC';
+let MOBILE_MENU_OPEN = false;
+
+// Matchday Interactive State (FM/Madden Split Screen)
+let LIVE_MATCH = null;
+let MATCH_SELECTED_PLAY = 'Slants';
+let MATCH_PLAY_CAT = 'ALL';
+let MATCH_FLIP = false;
+let MATCH_SHOW_ROUTES = true;
+let MATCH_AUTO_PLAY = false;
+let AUTO_PLAY_TIMER = null;
+let FIELD_ANIM = { frameId: null, t: 1, speed: 1, fromX: 30, toX: 30, playType: 'idle', offPlay: 'Quick Slant', defPlay: 'Zone Coverage', offLabel: '', defLabel: '', resultText: '', resultColor: '#f59e0b', targetIdx: 7, particles: [], offTeamId: null, defTeamId: null, firstDownX: 40, flipped: false };
+
+function createNewFranchise(userTeamId = 'LAC', coachName = 'Cole Harper') {
+  const offKeys = Object.keys(OFF_SCHEMES), defKeys = Object.keys(DEF_SCHEMES);
+  const teams = [];
+  for (const d of DIVISIONS) {
+    for (const t of d.teams) {
+      const roster = [];
+      const seeds = [...(TEAM_STAR_SEEDS[t.id] || [])];
+      for (const [pos, count] of ROSTER_TEMPLATE) {
+        for (let i = 0; i < count; i++) {
+          const seedIdx = seeds.findIndex(s => s[1] === pos);
+          if (seedIdx !== -1) {
+            const [sName, sPos, sOvr, sAge, sJersey] = seeds.splice(seedIdx, 1)[0];
+            const sp = createPlayer(sPos, 'star', sAge);
+            sp.name = sName; sp.ovr = sOvr; sp.peakOvr = sOvr; sp.pot = clamp(sOvr + (sAge <= 25 ? rand(2, 6) : 0), sOvr, 99);
+            sp.jersey = sJersey;
+            const sb = sPos === 'QB' ? 1.65 : ['WR','DL','CB','OL'].includes(sPos) ? 1.15 : 0.9;
+            sp.salary = Math.round(Math.max(1.2, Math.pow(Math.max(1, sOvr - 60) / 10, 2.05) * 2.05 * sb) * 10) / 10;
+            sp.guaranteed = Math.round(sp.salary * sp.years * 0.55 * 10) / 10;
+            roster.push(sp);
+          } else {
+            const tier = i === 0 ? (Math.random() < (t.stars >= 4.5 ? 0.35 : 0.18) ? 'star' : 'starter') : (i === 1 && ['WR','OL','DL','LB','CB','S'].includes(pos) ? 'starter' : 'backup');
+            roster.push(createPlayer(pos, tier));
+          }
+        }
+      }
+      const totalSal = roster.reduce((s, p) => s + p.salary, 0);
+      if (totalSal > 282) {
+        const scale = 264 / totalSal;
+        roster.forEach(p => { p.salary = Math.max(0.8, Math.round(p.salary * scale * 10) / 10); });
+      }
+      const team = {
+        ...t, conf: d.conf, div: d.div,
+        offScheme: offKeys[rand(0, offKeys.length - 1)],
+        defScheme: defKeys[rand(0, defKeys.length - 1)],
+        tempo: 'Balanced', fourthDown: 'Balanced', passRatio: 55,
+        trainingMode: 'coach', trainOff: 'Blocking', trainDef: 'Pass Rush', trainST: 'Kick Accuracy',
+        deadCap: 0, franchiseTagUsed: false, staff: { OC: generateStaffMember('OC'), DC: generateStaffMember('DC'), SCOUT: generateStaffMember('SCOUT'), TRAINER: generateStaffMember('TRAINER') }, roster, w: 0, l: 0, t: 0, pf: 0, pa: 0,
+        picks: [1,2,3,4,5,6,7].map(r => ({ id: `${t.id}_R${r}_2026`, round: r, origTeam: t.id, year: 2026 }))
+      };
+      sortDepthChart(team);
+      teams.push(team);
+    }
+  }
+  STATE = {
+    season: 2026, week: 1, phase: 'REGULAR',
+    coachName, userTeamId, teams,
+    schedule: generateSchedule(teams),
+    playoffs: null, freeAgents: generateFreeAgents(),
+    draftClass: generateDraftClass(), draftOrder: [], draftPickIdx: 0,
+    salaryCap: BASE_SALARY_CAP_2026, watchlist: [], inbox: [], champions: [], awardsHistory: [], hallOfFame: [], staffMarket: ['OC','DC','SCOUT','TRAINER','OC','DC','SCOUT','TRAINER'].map(r => generateStaffMember(r))
+  };
+  TRADE_PARTNER_ID = teams.find(t => t.id !== userTeamId).id;
+  addInbox('단장·헤드코치 부임 브리핑', '구단주 오피스',
+    `${coachName} 감독님, ${getUserTeam().city} ${getUserTeam().name} 지휘봉을 잡으신 것을 환영합니다. 현재 53인 로스터와 $${getSalaryCap().toFixed(1)}M 샐러리캡이 배정되었습니다. 우측 상단 'Continue →' 또는 'Go to Game Day'로 1주차 경기를 시작하세요.`, 'Club');
+  addInbox('주간 스카우트 리포트 — 드래프트 핵심 타깃', '수석 스카우트 Alex Morgan',
+    `현재 로스터 취약 포지션을 점검한 결과, 다가올 드래프트 최상위 유망주로 ${STATE.draftClass[0].name}(${STATE.draftClass[0].pos}, 예상 OVR ${STATE.draftClass[0].ovr}), ${STATE.draftClass[1].name}(${STATE.draftClass[1].pos}), ${STATE.draftClass[2].name}(${STATE.draftClass[2].pos})을 추천합니다.`, 'Scouts');
+  generatePreGameBriefing();
+  SELECTED_INBOX_ID = STATE.inbox[0]?.id || null;
+  LIVE_MATCH = null;
+}
+
+function getTeam(id) { return STATE.teams.find(t => t.id === id); }
+function getUserTeam() { return getTeam(STATE.userTeamId); }
+function addInbox(title, sender, body, cat = 'Team News') {
+  const item = { id: Date.now() + Math.floor(Math.random()*9999), date: `2026-${String(Math.min(12, 8 + Math.floor(STATE.week/4))).padStart(2,'0')}-${String(clamp((STATE.week*7)%28 + 1, 1, 28)).padStart(2,'0')}`, week: `W${STATE.week}`, title, sender, body, cat, read: false };
+  STATE.inbox.unshift(item);
+  if (STATE.inbox.length > 40) STATE.inbox.pop();
+  SELECTED_INBOX_ID = item.id;
+}
+
+function getUserNextGame() {
+  if (STATE.phase === 'REGULAR' && STATE.week <= 18) return STATE.schedule[STATE.week - 1].find(g => g.home === STATE.userTeamId || g.away === STATE.userTeamId) || null;
+  if (STATE.phase === 'PLAYOFFS' && STATE.playoffs) return (STATE.playoffs.rounds[STATE.playoffs.currentRound] || []).find(g => (g.home === STATE.userTeamId || g.away === STATE.userTeamId) && !g.played) || null;
+  return null;
+}
+
+function generatePreGameBriefing() {
+  const g = getUserNextGame();
+  if (!g) return;
+  const opp = getTeam(g.home === STATE.userTeamId ? g.away : g.home);
+  const oR = getTeamRatings(opp);
+  const tip = opp.defScheme === '3-4 Blitz' ? '상대 블리츠 빈도가 높습니다. Slants·Mesh·Screen으로 압박을 역이용하세요.'
+    : opp.defScheme === 'Cover 2' ? '상대는 Cover 2로 딥 패스를 견제합니다. HB Dive·HB Stretch로 빈 공간을 공략하세요.'
+    : opp.defScheme === 'Nickel Man' ? '상대는 맨 프레스 위주입니다. Mesh 크로싱과 PA Boot Over가 효과적입니다.'
+    : '균형 잡힌 4-3 베이스 수비입니다. 1~2다운 런·패스 밸런스로 3다운 매치업을 공략하세요.';
+  addInbox(`[코치 리포트] ${STATE.week}주차 vs ${opp.city} ${opp.name} 게임플랜`, '수석 코디네이터',
+    `상대 종합 전력 OVR ${oR.ovr} (OFF ${oR.off} / DEF ${oR.def}). 주력 시스템: ${opp.offScheme} / ${opp.defScheme}. 핵심 전술 제안: ${tip}`, 'Coach Reports');
+}
+
+// ============================================================================
+// 5. CALIBRATED NFL MATCH SIMULATION ENGINE
+// ============================================================================
+function getKeyPlayers(team) {
+  const pick = (pos, idx = 0) => team.roster.filter(p => p.pos === pos && p.injuredWeeks === 0)[idx] || team.roster.find(p => p.pos === pos) || team.roster[0];
+  return { qb: pick('QB',0), rb: pick('RB',0), wrs: [pick('WR',0), pick('WR',1), pick('TE',0)], dl: pick('DL',0), lb: pick('LB',0), db: pick('CB',0), k: pick('K',0) };
+}
+
+function chooseAIOffPlay(team, down, dist, yardLine, secLeft, scoreDiff) {
+  const sc = OFF_SCHEMES[team.offScheme] || OFF_SCHEMES['West Coast'];
+  let passBias = team.id === STATE.userTeamId ? (team.passRatio / 100) : sc.passBias;
+  let isPass = Math.random() < passBias;
+  if (down === 3 && dist >= 6) isPass = Math.random() < 0.86;
+  if (down === 3 && dist <= 2) isPass = Math.random() < 0.35;
+  if (secLeft < 120 && scoreDiff < 0) isPass = true;
+  if (secLeft < 240 && scoreDiff > 7) isPass = false;
+  if (!isPass) return Math.random() < 0.55 ? 'Inside Run' : 'Outside Zone';
+  const r = Math.random();
+  if (dist >= 12 || (secLeft < 60 && scoreDiff < 0)) return r < 0.45 ? 'Deep Shot' : 'Play Action';
+  return r < 0.38 ? 'Quick Slant' : r < 0.62 ? 'Play Action' : r < 0.80 ? 'Screen Pass' : 'Deep Shot';
+}
+
+function chooseAIDefPlay(team, down, dist, yardLine, secLeft, scoreDiff) {
+  if (secLeft < 45 && scoreDiff > 3 && yardLine < 60) return 'Prevent';
+  if (down === 3 && dist >= 8) return Math.random() < 0.45 ? 'Zone Blitz' : 'Zone Coverage';
+  if (dist <= 2) return Math.random() < 0.6 ? 'Run Stuff' : 'Man Press';
+  const s = team.defScheme, r = Math.random();
+  if (s === '3-4 Blitz') return r < 0.38 ? 'Zone Blitz' : r < 0.7 ? 'Man Press' : 'Run Stuff';
+  if (s === 'Cover 2') return r < 0.55 ? 'Zone Coverage' : r < 0.8 ? 'Run Stuff' : 'Zone Blitz';
+  if (s === 'Nickel Man') return r < 0.5 ? 'Man Press' : r < 0.8 ? 'Zone Coverage' : 'Zone Blitz';
+  return r < 0.3 ? 'Run Stuff' : r < 0.65 ? 'Zone Coverage' : r < 0.85 ? 'Man Press' : 'Zone Blitz';
+}
+
+function getRecommendedPlays(m, isUserOff) {
+  if (isUserOff) {
+    if (m.down === 4) {
+      const fgDist = (100 - m.yardLine) + 17;
+      return fgDist <= 56 ? ['Field Goal', 'HB Dive', 'Slants'] : ['Punt', 'Slants', 'Mesh'];
+    }
+    if (m.dist <= 2) return ['HB Dive', 'HB Stretch', 'Slants'];
+    if (m.dist >= 9) return ['Four Verticals', 'PA Boot Over', 'Mesh'];
+    return ['Slants', 'Mesh', 'Stick'];
+  } else {
+    if (m.dist <= 2) return ['4-3 Run Blitz', 'Cover 1 Robber', 'Cover 3 Sky'];
+    if (m.dist >= 10) return ['Cover 4 Quarters', 'Cover 2 Tampa 2', 'Mid Blitz 0'];
+    return ['Cover 3 Sky', 'Cover 2 Tampa 2', 'Edge Fire Zone 3'];
+  }
+}
+
+function initLiveMatch(gameObj) {
+  const home = getTeam(gameObj.home), away = getTeam(gameObj.away);
+  const firstRecv = Math.random() < 0.5 ? 0 : 1;
+  LIVE_MATCH = {
+    gameObj, homeId: home.id, awayId: away.id,
+    stadium: `${home.city} Crest Stadium`,
+    weather: `Clear / ${rand(14, 29)}°C / Wind ${rand(3, 14)}km/h`,
+    score: [0, 0], qtr: 1, clock: 900, playClock: 36,
+    twoMinWarned: { 2: false, 4: false }, timeouts: [3, 3],
+    poss: firstRecv, firstHalfRecv: firstRecv, yardLine: 30, down: 1, dist: 10,
+    awaitingPAT: false, otPossessions: [0, 0], finished: false,
+    lastBanner: `Kickoff / touchback / ball at the 30`,
+    log: [{ qtr: 1, clock: '15:00', text: `킥오프! ${firstRecv === 0 ? home.name : away.name} 선공 (30야드라인).`, type: 'info' }],
+    box: [
+      { passAtt:0, passCmp:0, passYds:0, rushAtt:0, rushYds:0, sacks:0, ints:0, fumbles:0, firstDowns:0, plays:0 },
+      { passAtt:0, passCmp:0, passYds:0, rushAtt:0, rushYds:0, sacks:0, ints:0, fumbles:0, firstDowns:0, plays:0 }
+    ]
+  };
+  const isUserOff = (firstRecv === 0 ? home.id : away.id) === STATE.userTeamId;
+  MATCH_SELECTED_PLAY = isUserOff ? 'Slants' : 'Cover 3 Sky';
+  MATCH_PLAY_CAT = 'ALL';
+  MATCH_FLIP = false;
+  stopAutoPlay();
+  FIELD_ANIM = { frameId: null, t: 1, speed: FIELD_ANIM.speed || 1, fromX: 30, toX: 30, playType: 'idle', offPlay: 'Quick Slant', defPlay: 'Zone Coverage', offLabel: '', defLabel: '', resultText: '', resultColor: '#38bdf8', targetIdx: 7, particles: [], offTeamId: firstRecv === 0 ? home.id : away.id, defTeamId: firstRecv === 0 ? away.id : home.id, firstDownX: 40, flipped: false };
+}
+
+function resolvePlay(m, userCall = null, silent = false) {
+  if (m.finished) return;
+  const home = getTeam(m.homeId), away = getTeam(m.awayId);
+  const offIdx = m.poss, defIdx = 1 - m.poss;
+  const offTeam = offIdx === 0 ? home : away, defTeam = defIdx === 0 ? home : away;
+  const oR = getTeamRatings(offTeam), dR = getTeamRatings(defTeam);
+  const oP = getKeyPlayers(offTeam), dP = getKeyPlayers(defTeam);
+  const oScheme = OFF_SCHEMES[offTeam.offScheme] || OFF_SCHEMES['West Coast'];
+  const dScheme = DEF_SCHEMES[defTeam.defScheme] || DEF_SCHEMES['4-3 Base'];
+  const box = m.box[offIdx];
+  const scoreDiff = m.score[offIdx] - m.score[defIdx];
+  const totalSecLeft = (4 - Math.min(4, m.qtr)) * 900 + m.clock;
+  const prevYL = m.yardLine;
+
+  const logPlay = (text, type = 'normal') => {
+    m.lastBanner = text;
+    if (!silent) m.log.unshift({ qtr: m.qtr, clock: fmtClock(m.clock), text, type });
+  };
+  const kickoffTo = (recvIdx) => {
+    if (m.qtr >= 5) {
+      m.otPossessions[offIdx]++;
+      if (m.otPossessions[0] >= 1 && m.otPossessions[1] >= 1 && m.score[0] !== m.score[1]) { finishMatch(m, silent); return; }
+    }
+    m.poss = recvIdx; m.yardLine = Math.random() < 0.65 ? 30 : clamp(rand(19, 39), 14, 48); m.down = 1; m.dist = 10;
+  };
+
+  if (m.awaitingPAT) {
+    const choice = userCall || ((m.qtr >= 4 && Math.abs(scoreDiff) === 2) ? 'PAT2' : 'PAT1');
+    if (choice === 'PAT2') {
+      if (Math.random() < clamp(0.47 + (oR.off - dR.def) * 0.006, 0.25, 0.72)) { m.score[offIdx] += 2; logPlay(`🔥 2점 컨버전 성공! ${offTeam.id} +2점!`, 'td'); if (!silent) SoundFX.firstDown(); }
+      else logPlay(`❌ 2점 컨버전 실패!`, 'turnover');
+    } else {
+      oP.k.stats.fgAtt++;
+      if (Math.random() < clamp(0.94 + (oR.kicker - 75) * 0.002, 0.85, 0.99)) { oP.k.stats.fgMade++; m.score[offIdx] += 1; logPlay(`✅ ${oP.k.name} PAT 성공 (+1점)`, 'score'); }
+      else logPlay(`❌ ${oP.k.name} PAT 실축!`, 'turnover');
+    }
+    m.awaitingPAT = false; kickoffTo(defIdx);
+    syncSelectedPlayForPossession(m);
+    return;
+  }
+
+  let action = userCall;
+  if (action === 'Field Goal') action = 'FG';
+  if (action === 'Punt') action = 'PUNT';
+  if (!action && m.down === 4) {
+    const fgDist = (100 - m.yardLine) + 17;
+    const agg = offTeam.fourthDown === 'Analytics' ? 1 : offTeam.fourthDown === 'Conservative' ? -1 : 0;
+    const goForIt = (m.dist <= (2 + agg) && m.yardLine >= (54 - agg * 6) && m.yardLine <= 98) || (m.qtr >= 4 && m.clock < 240 && scoreDiff < 0 && (scoreDiff < -3 || fgDist > 56));
+    if (!goForIt) action = fgDist <= 57 ? 'FG' : 'PUNT';
+  }
+
+  if (action === 'FG') {
+    m.lastOffPlay = 'Field Goal'; m.lastDefPlay = 'FG Block'; m.lastOffEngineKey = 'FG'; m.lastDefEngineKey = 'Zone Coverage'; m.lastOffTeamId = offTeam.id; m.lastDefTeamId = defTeam.id; m.lastFirstDownX = Math.min(100, prevYL + m.dist);
+    const fgDist = (100 - m.yardLine) + 17;
+    const baseProb = fgDist <= 35 ? 0.96 : fgDist <= 45 ? 0.85 : fgDist <= 52 ? 0.72 : fgDist <= 58 ? 0.54 : 0.30;
+    oP.k.stats.fgAtt++; m.clock = Math.max(0, m.clock - 6);
+    if (Math.random() < clamp(baseProb + (oR.kicker - 75) * 0.004, 0.15, 0.99)) {
+      oP.k.stats.fgMade++; m.score[offIdx] += 3;
+      logPlay(`🎯 ${oP.k.name}, ${fgDist}야드 필드골 성공! (+3점)`, 'score');
+      if (!silent) { SoundFX.touchdown(); startFieldAnim(prevYL, 100, 'fg', `${fgDist}YD FG GOOD!`, '#10b981'); }
+      kickoffTo(defIdx);
+    } else {
+      logPlay(`❌ ${oP.k.name}, ${fgDist}야드 필드골 실축! 공격권 전환.`, 'turnover');
+      if (!silent) { SoundFX.turnover(); startFieldAnim(prevYL, 100, 'fg', 'FG MISSED', '#ef4444'); }
+      m.poss = defIdx; m.yardLine = clamp(100 - Math.max(20, m.yardLine - 7), 20, 80); m.down = 1; m.dist = 10;
+    }
+    advanceClockChecks(m, silent); syncSelectedPlayForPossession(m); return;
+  }
+
+  if (action === 'PUNT') {
+    m.lastOffPlay = 'Punt'; m.lastDefPlay = 'Punt Return'; m.lastOffEngineKey = 'PUNT'; m.lastDefEngineKey = 'Zone Coverage'; m.lastOffTeamId = offTeam.id; m.lastDefTeamId = defTeam.id; m.lastFirstDownX = Math.min(100, prevYL + m.dist);
+    const puntYds = rand(38, 53), landing = m.yardLine + puntYds;
+    m.clock = Math.max(0, m.clock - 8);
+    if (landing >= 100) { logPlay(`🦶 ${puntYds}야드 펀트 — 터치백 (${defTeam.id} 20야드라인)`, 'info'); m.poss = defIdx; m.yardLine = 20; }
+    else { const ret = rand(0, 11), newYL = clamp(100 - landing + ret, 4, 85); logPlay(`🦶 ${puntYds}야드 펀트 (리턴 ${ret}yd) → ${defTeam.id} ${newYL}야드라인`, 'info'); m.poss = defIdx; m.yardLine = newYL; }
+    m.down = 1; m.dist = 10;
+    if (!silent) { SoundFX.whistle(); startFieldAnim(prevYL, Math.min(98, prevYL + puntYds), 'punt', `PUNT ${puntYds} YDS`, '#94a3b8'); }
+    advanceClockChecks(m, silent); syncSelectedPlayForPossession(m); return;
+  }
+
+  const isUserOff = offTeam.id === STATE.userTeamId;
+  const userOffObj = isUserOff && action ? OFF_PLAYS.find(p => p.id === action) : null;
+  const userDefObj = !isUserOff && action ? DEF_PLAYS.find(p => p.id === action) : null;
+  const aiOffKey = chooseAIOffPlay(offTeam, m.down, m.dist, m.yardLine, totalSecLeft, scoreDiff);
+  const aiDefKey = chooseAIDefPlay(defTeam, m.down, m.dist, m.yardLine, totalSecLeft, scoreDiff);
+  const offObj = userOffObj || OFF_PLAYS.find(p => p.engineKey === aiOffKey) || OFF_PLAYS[0];
+  const defObj = userDefObj || DEF_PLAYS.find(p => p.engineKey === aiDefKey) || DEF_PLAYS[0];
+  const offPlay = offObj.engineKey, defPlay = defObj.engineKey;
+
+  const trainOffBoost = offTeam.id === STATE.userTeamId ? 0.35 : 0;
+  const trainDefBoost = defTeam.id === STATE.userTeamId ? 0.35 : 0;
+  const matBonus = (PLAY_MATRIX[offPlay][defPlay] || 0) + (offObj.ydsMod || 0) + trainOffBoost - trainDefBoost;
+
+  m.lastOffPlay = `${offObj.id} (${offObj.formation})`;
+  m.lastDefPlay = `${defObj.id} (${defObj.formation})`;
+  m.lastOffEngineKey = offPlay; m.lastDefEngineKey = defPlay;
+  m.lastOffTeamId = offTeam.id; m.lastDefTeamId = defTeam.id; m.lastFirstDownX = Math.min(100, prevYL + m.dist);
+  const isPass = !['Inside Run', 'Outside Zone'].includes(offPlay);
+  box.plays++;
+  if (!silent) SoundFX.snap();
+
+  if (Math.random() < 0.05) {
+    const pen = Math.random();
+    if (pen < 0.42) {
+      const loss = pen < 0.22 ? 5 : 10;
+      m.yardLine = Math.max(1, m.yardLine - loss); m.dist += loss; m.clock = Math.max(0, m.clock - 6);
+      logPlay(`🚩 페널티! ${offTeam.id} ${loss===5?'False Start':'Offensive Holding'} (-${loss}yd)`, 'penalty');
+    } else if (pen < 0.76) {
+      m.yardLine = Math.min(99, m.yardLine + 5); m.dist = Math.max(1, m.dist - 5); m.clock = Math.max(0, m.clock - 6);
+      logPlay(`🚩 페널티! ${defTeam.id} Offsides (+5yd)`, 'penalty');
+    } else {
+      const gain = rand(10, 22);
+      m.yardLine = Math.min(99, m.yardLine + gain); m.down = 1; m.dist = Math.min(10, 100 - m.yardLine); box.firstDowns++; m.clock = Math.max(0, m.clock - 8);
+      logPlay(`🚩 페널티! ${defTeam.id} Pass Interference (+${gain}yd, 자동 1st Down!)`, 'penalty');
+    }
+    if (!silent) { SoundFX.whistle(); startFieldAnim(prevYL, m.yardLine, 'penalty', 'FLAG ON THE PLAY', '#eab308'); }
+    advanceClockChecks(m, silent); return;
+  }
+
+  let yards = 0;
+  let clockRun = offTeam.tempo === 'Chew Clock' ? rand(38, 46) : offTeam.tempo === 'Hurry-Up' ? rand(14, 22) : rand(30, 40);
+  if (totalSecLeft < 140 && scoreDiff < 0) clockRun = rand(10, 18);
+
+  if (isPass) {
+    const sackProb = clamp(0.055 + dScheme.sackMod + (dR.passDef - oR.passOff)*0.002 + (defPlay==='Zone Blitz'?0.032:0) + (offPlay==='Deep Shot'?0.025:0), 0.02, 0.17);
+    if (Math.random() < sackProb) {
+      box.sacks++; dP.dl.stats.sacks++; dP.dl.stats.tackles++;
+      yards = -rand(4, 9); m.yardLine += yards; m.dist -= yards; m.down++;
+      logPlay(`💥 SACK! ${dP.dl.name}가 ${oP.qb.name}를 ${Math.abs(yards)}야드 뒤에서 색! (${offObj.id} vs ${defObj.id})`, 'turnover');
+      if (!silent) { SoundFX.turnover(); startFieldAnim(prevYL, m.yardLine, 'sack', `SACK ${yards} YDS`, '#ef4444'); }
+    } else {
+      box.passAtt++; oP.qb.stats.passAtt++;
+      const baseCmp = offPlay==='Screen Pass'?0.73:offPlay==='Quick Slant'?0.67:offPlay==='Play Action'?0.60:0.42;
+      const cmpProb = clamp(baseCmp + oScheme.passCmpMod + (oR.passOff - dR.passDef - dScheme.passDefMod)*0.006 + matBonus*0.02, 0.22, 0.89);
+      const intProb = clamp((offPlay==='Deep Shot'?0.044:0.020) + oScheme.intMod + dScheme.intMod + (dR.passDef - oR.passOff)*0.001 - matBonus*0.003, 0.007, 0.085);
+      const roll = Math.random();
+      if (roll < intProb) {
+        box.ints++; oP.qb.stats.ints++; dP.db.stats.defInt++;
+        const spot = clamp(100 - Math.min(96, m.yardLine + rand(6, 22)), 5, 92);
+        logPlay(`🚨 INTERCEPTION! ${dP.db.name}가 ${oP.qb.name}의 패스를 가로챘습니다! (${offObj.id} vs ${defObj.id})`, 'turnover');
+        if (!silent) { SoundFX.turnover(); startFieldAnim(prevYL, 100 - spot, 'int', 'INTERCEPTION!', '#ef4444'); }
+        m.poss = defIdx; m.yardLine = spot; m.down = 1; m.dist = 10; m.clock = Math.max(0, m.clock - 10);
+        advanceClockChecks(m, silent); syncSelectedPlayForPossession(m); return;
+      } else if (roll < intProb + cmpProb) {
+        box.passCmp++; oP.qb.stats.passCmp++;
+        const target = oP.wrs[rand(0, oP.wrs.length - 1)];
+        const meanYds = (offPlay==='Deep Shot'?19.5:offPlay==='Play Action'?12.4:offPlay==='Quick Slant'?7.4:5.8) + oScheme.passYdsMod;
+        yards = Math.round(gaussian(meanYds + matBonus*1.25 + (oR.passOff - dR.passDef)*0.12, offPlay==='Deep Shot'?9.5:4.8));
+        if (Math.random() < 0.055) yards += rand(9, 24);
+        yards = clamp(yards, -2, 100 - m.yardLine);
+        box.passYds += yards; oP.qb.stats.passYds += yards; target.stats.rec++; target.stats.recYds += yards; dP.lb.stats.tackles++;
+        m.yardLine += yards; m.dist -= yards; m.down++;
+        logPlay(`✈️ ${oP.qb.name} → ${target.name} 패스 +${yards}야드 (${offObj.id} vs ${defObj.id})`, yards >= 15 ? 'big' : 'normal');
+        if (!silent) startFieldAnim(prevYL, m.yardLine, 'pass', `PASS +${yards} YDS`, '#38bdf8');
+      } else {
+        clockRun = rand(5, 8); m.down++;
+        logPlay(`💨 ${oP.qb.name} 패스 불완전 (Incomplete) — ${offObj.id} vs ${defObj.id}`, 'normal');
+        if (!silent) startFieldAnim(prevYL, prevYL, 'inc', 'INCOMPLETE', '#94a3b8');
+      }
+    }
+  } else {
+    box.rushAtt++; oP.rb.stats.rushAtt++;
+    if (Math.random() < 0.011) {
+      box.fumbles++;
+      logPlay(`🚨 FUMBLE LOST! ${oP.rb.name} 펌블 → ${defTeam.id} 회복!`, 'turnover');
+      if (!silent) { SoundFX.turnover(); startFieldAnim(prevYL, prevYL + 2, 'int', 'FUMBLE LOST!', '#ef4444'); }
+      m.poss = defIdx; m.yardLine = clamp(100 - m.yardLine, 5, 95); m.down = 1; m.dist = 10; m.clock = Math.max(0, m.clock - 12);
+      advanceClockChecks(m, silent); syncSelectedPlayForPossession(m); return;
+    }
+    const meanRush = (offPlay==='Inside Run'?3.9:4.1) + oScheme.rushMod - dScheme.rushDefMod*0.4;
+    yards = Math.round(gaussian(meanRush + matBonus*0.85 + (oR.rushOff - dR.rushDef)*0.11, 3.1));
+    if (Math.random() < 0.05) yards += rand(8, 22);
+    yards = clamp(yards, -4, 100 - m.yardLine);
+    box.rushYds += yards; oP.rb.stats.rushYds += yards; dP.lb.stats.tackles++;
+    m.yardLine += yards; m.dist -= yards; m.down++;
+    logPlay(`🏃 ${oP.rb.name} 러싱 ${yards>=0?'+'+yards:yards}야드 (${offObj.id} vs ${defObj.id})`, yards >= 12 ? 'big' : 'normal');
+    if (!silent) startFieldAnim(prevYL, m.yardLine, 'rush', `RUSH ${yards>=0?'+':''}${yards} YDS`, '#10b981');
+  }
+
+  const prevClock = m.clock;
+  m.clock = Math.max(0, m.clock - clockRun);
+  if ((m.qtr === 2 || m.qtr === 4) && prevClock > 120 && m.clock <= 120 && !m.twoMinWarned[m.qtr]) {
+    m.clock = 120; m.twoMinWarned[m.qtr] = true;
+    logPlay(`⏱️ 2-Minute Warning! 시계가 2:00에 멈춥니다.`, 'info');
+  }
+
+  if (m.yardLine <= 0) {
+    m.score[defIdx] += 2; logPlay(`🚨 SAFETY! ${defTeam.id} +2점!`, 'turnover');
+    if (!silent) { SoundFX.turnover(); startFieldAnim(prevYL, 0, 'sack', 'SAFETY! +2', '#ef4444'); }
+    kickoffTo(defIdx);
+  } else if (m.yardLine >= 100) {
+    m.score[offIdx] += 6;
+    if (isPass) { oP.qb.stats.passTD++; oP.wrs[0].stats.recTD++; } else { oP.rb.stats.rushTD++; }
+    logPlay(`🏈🔥 TOUCHDOWN!! ${offTeam.city} ${offTeam.name} +6점!`, 'td');
+    if (!silent) { SoundFX.touchdown(); startFieldAnim(prevYL, 100, 'td', 'TOUCHDOWN!', '#f59e0b'); }
+    m.awaitingPAT = true;
+    if (silent || !isUserOff) resolvePlay(m, null, silent);
+  } else if (m.dist <= 0) {
+    box.firstDowns++; m.down = 1; m.dist = Math.min(10, 100 - m.yardLine);
+    if (!silent) SoundFX.firstDown();
+  } else if (m.down > 4) {
+    logPlay(`🔄 4th Down 실패 (Turnover on Downs)! ${defTeam.id} 공격권.`, 'turnover');
+    if (!silent) SoundFX.turnover();
+    m.poss = defIdx; m.yardLine = clamp(100 - m.yardLine, 1, 99); m.down = 1; m.dist = 10;
+  }
+
+  advanceClockChecks(m, silent);
+  syncSelectedPlayForPossession(m);
+}
+
+function syncSelectedPlayForPossession(m) {
+  const isUserOff = (m.poss === 0 ? m.homeId : m.awayId) === STATE.userTeamId;
+  const list = isUserOff ? OFF_PLAYS : DEF_PLAYS;
+  if (!list.some(p => p.id === MATCH_SELECTED_PLAY)) {
+    MATCH_SELECTED_PLAY = getRecommendedPlays(m, isUserOff)[0];
+    MATCH_PLAY_CAT = 'ALL';
+  }
+}
+
+function advanceClockChecks(m, silent) {
+  if (m.finished || m.clock > 0) return;
+  if (m.qtr === 1) { m.qtr = 2; m.clock = 900; if (!silent) SoundFX.whistle(); }
+  else if (m.qtr === 2) { m.qtr = 3; m.clock = 900; m.timeouts = [3, 3]; m.poss = 1 - m.firstHalfRecv; m.yardLine = 30; m.down = 1; m.dist = 10; if (!silent) SoundFX.whistle(); }
+  else if (m.qtr === 3) { m.qtr = 4; m.clock = 900; if (!silent) SoundFX.whistle(); }
+  else if (m.qtr === 4) {
+    if (m.score[0] === m.score[1]) { m.qtr = 5; m.clock = 600; m.timeouts = [2, 2]; m.poss = Math.random()<0.5?0:1; m.yardLine = 30; m.down = 1; m.dist = 10; }
+    else finishMatch(m, silent);
+  } else {
+    if (STATE.phase === 'PLAYOFFS' && m.score[0] === m.score[1]) m.clock = 600;
+    else finishMatch(m, silent);
+  }
+}
+
+function finishMatch(m, silent) {
+  if (m.finished) return;
+  m.finished = true;
+  stopAutoPlay();
+  const g = m.gameObj; g.played = true; g.homeScore = m.score[0]; g.awayScore = m.score[1];
+  const home = getTeam(m.homeId), away = getTeam(m.awayId);
+  if (STATE.phase === 'REGULAR') {
+    home.pf += g.homeScore; home.pa += g.awayScore; away.pf += g.awayScore; away.pa += g.homeScore;
+    if (g.homeScore > g.awayScore) { home.w++; away.l++; } else if (g.awayScore > g.homeScore) { away.w++; home.l++; } else { home.t++; away.t++; }
+  }
+  if (!silent) {
+    SoundFX.whistle();
+    const uWon = (home.id === STATE.userTeamId && g.homeScore > g.awayScore) || (away.id === STATE.userTeamId && g.awayScore > g.homeScore);
+    const opp = home.id === STATE.userTeamId ? away : home;
+    addInbox(`[경기 결과] ${uWon ? '승리!' : '패배'} vs ${opp.city} ${opp.name} (${g.awayScore}-${g.homeScore})`, '리그 기자단',
+      `${away.name} ${g.awayScore} : ${g.homeScore} ${home.name}. 패싱 ${m.box[home.id===STATE.userTeamId?0:1].passYds}야드, 러싱 ${m.box[home.id===STATE.userTeamId?0:1].rushYds}야드를 기록했습니다.`, 'Team News');
+  }
+}
+
+function simGameSilent(gameObj) {
+  if (gameObj.played) return;
+  const home = getTeam(gameObj.home), away = getTeam(gameObj.away);
+  const firstRecv = Math.random() < 0.5 ? 0 : 1;
+  const m = {
+    gameObj, homeId: home.id, awayId: away.id, score: [0,0], qtr: 1, clock: 900,
+    twoMinWarned: {2:false,4:false}, timeouts: [3,3], poss: firstRecv, firstHalfRecv: firstRecv,
+    yardLine: 30, down: 1, dist: 10, awaitingPAT: false, otPossessions: [0,0], finished: false, log: [],
+    box: [{ passAtt:0,passCmp:0,passYds:0,rushAtt:0,rushYds:0,sacks:0,ints:0,fumbles:0,firstDowns:0,plays:0 },{ passAtt:0,passCmp:0,passYds:0,rushAtt:0,rushYds:0,sacks:0,ints:0,fumbles:0,firstDowns:0,plays:0 }]
+  };
+  let guard = 0;
+  while (!m.finished && guard < 400) { resolvePlay(m, null, true); guard++; }
+  if (!m.finished) finishMatch(m, true);
+}
+
+// ============================================================================
+// 6. SEASON PROGRESSION, PLAYOFFS & 7-ROUND DRAFT
+// ============================================================================
+function getStandings(conf = null) {
+  return STATE.teams.filter(t => !conf || t.conf === conf).sort((a, b) => {
+    const wpA = (a.w + a.t*0.5) / Math.max(1, a.w+a.l+a.t), wpB = (b.w + b.t*0.5) / Math.max(1, b.w+b.l+b.t);
+    return (wpB - wpA) || ((b.pf - b.pa) - (a.pf - a.pa));
+  });
+}
+function getPlayoffSeeds(conf) {
+  const winners = ['East','North','South','West'].map(d => getStandings(conf).filter(t => t.div === d)[0]);
+  winners.sort((a,b) => ((b.w+b.t*0.5)/Math.max(1,b.w+b.l+b.t)) - ((a.w+a.t*0.5)/Math.max(1,a.w+a.l+a.t)));
+  const wIds = new Set(winners.map(t => t.id));
+  return [...winners, ...getStandings(conf).filter(t => !wIds.has(t.id)).slice(0, 3)];
+}
+
+function advanceWeekOrPhase() {
+  stopAutoPlay();
+  STATE.teams.forEach(t => t.roster.forEach(p => { if (p.injuredWeeks > 0) p.injuredWeeks--; }));
+  if (STATE.phase === 'REGULAR') {
+    STATE.schedule[STATE.week - 1].forEach(g => { if (!g.played) simGameSilent(g); });
+    if (Math.random() < 0.12) {
+      const victim = getUserTeam().roster[rand(0, 20)];
+      if (victim && victim.injuredWeeks === 0) {
+        victim.injuredWeeks = rand(1, 2);
+        addInbox(`🏥 부상 리포트: ${victim.name} (${victim.pos})`, '메디컬 스태프', `${victim.name} 선수가 경미한 부상으로 ${victim.injuredWeeks}주 결장합니다.`, 'Injuries');
+      }
+    }
+    LIVE_MATCH = null;
+    if (STATE.week < 18) { STATE.week++; generatePreGameBriefing(); }
+    else {
+      STATE.phase = 'PLAYOFFS'; STATE.week = 19;
+      const afc = getPlayoffSeeds('AFC'), nfc = getPlayoffSeeds('NFC');
+      STATE.playoffs = {
+        afcSeeds: afc.map(t=>t.id), nfcSeeds: nfc.map(t=>t.id), currentRound: 0,
+        roundNames: ['와일드카드 라운드','디비저널 라운드','컨퍼런스 챔피언십','그리드아이언 볼'],
+        rounds: [[
+          { conf:'AFC', home:afc[1].id, away:afc[6].id, played:false, homeScore:0, awayScore:0 },
+          { conf:'AFC', home:afc[2].id, away:afc[5].id, played:false, homeScore:0, awayScore:0 },
+          { conf:'AFC', home:afc[3].id, away:afc[4].id, played:false, homeScore:0, awayScore:0 },
+          { conf:'NFC', home:nfc[1].id, away:nfc[6].id, played:false, homeScore:0, awayScore:0 },
+          { conf:'NFC', home:nfc[2].id, away:nfc[5].id, played:false, homeScore:0, awayScore:0 },
+          { conf:'NFC', home:nfc[3].id, away:nfc[4].id, played:false, homeScore:0, awayScore:0 },
+        ],[],[],[]], champion: null
+      };
+      // Crown Regular Season Awards (MVP / OPOY / DPOY)
+      const allLeagueP = STATE.teams.flatMap(t => t.roster.map(p => ({ p, team: t })));
+      const mvpC = [...allLeagueP].sort((a,b) => (b.p.stats.passYds*0.04 + b.p.stats.passTD*4 - b.p.stats.ints*2 + b.p.stats.rushYds*0.1 + b.p.stats.rushTD*6 + b.p.stats.recYds*0.1 + b.p.stats.recTD*6) - (a.p.stats.passYds*0.04 + a.p.stats.passTD*4 - a.p.stats.ints*2 + a.p.stats.rushYds*0.1 + a.p.stats.rushTD*6 + a.p.stats.recYds*0.1 + a.p.stats.recTD*6))[0];
+      const opoyC = [...allLeagueP].filter(x => x.p.pos !== 'QB').sort((a,b) => (b.p.stats.rushYds + b.p.stats.recYds + (b.p.stats.rushTD + b.p.stats.recTD)*60) - (a.p.stats.rushYds + a.p.stats.recYds + (a.p.stats.rushTD + a.p.stats.recTD)*60))[0];
+      const dpoyC = [...allLeagueP].filter(x => ['DL','LB','CB','S'].includes(x.p.pos)).sort((a,b) => (b.p.stats.sacks*5 + b.p.stats.defInt*6 + b.p.stats.tackles*0.5) - (a.p.stats.sacks*5 + a.p.stats.defInt*6 + a.p.stats.tackles*0.5))[0];
+      if (!STATE.awardsHistory) STATE.awardsHistory = [];
+      STATE.awardsHistory.unshift({
+        season: STATE.season,
+        mvp: mvpC ? `${mvpC.p.name} (${mvpC.p.pos}, ${mvpC.team.id})` : '-',
+        opoy: opoyC ? `${opoyC.p.name} (${opoyC.p.pos}, ${opoyC.team.id})` : '-',
+        dpoy: dpoyC ? `${dpoyC.p.name} (${dpoyC.p.pos}, ${dpoyC.team.id})` : '-',
+        champ: '진행 중'
+      });
+      addInbox(`🏆 ${STATE.season} 정규시즌 어워드 및 플레이오프 대진 확정!`, '리그 사무국',
+        `정규시즌 MVP: ${mvpC?.p.name}(${mvpC?.team.id}) · OPOY: ${opoyC?.p.name}(${opoyC?.team.id}) · DPOY: ${dpoyC?.p.name}(${dpoyC?.team.id}). 이제 14팀 플레이오프가 개막합니다!`, 'Club');
+      generatePreGameBriefing();
+    }
+  } else if (STATE.phase === 'PLAYOFFS') {
+    const po = STATE.playoffs, r = po.currentRound;
+    po.rounds[r].forEach(g => { if (!g.played) simGameSilent(g); });
+    LIVE_MATCH = null;
+    const win = g => g.homeScore >= g.awayScore ? g.home : g.away;
+    if (r === 0) {
+      const mk = (c, seeds) => { const w = po.rounds[0].filter(g=>g.conf===c).map(win).sort((a,b)=>seeds.indexOf(a)-seeds.indexOf(b)); return [{conf:c,home:seeds[0],away:w[2],played:false,homeScore:0,awayScore:0},{conf:c,home:w[0],away:w[1],played:false,homeScore:0,awayScore:0}]; };
+      po.rounds[1] = [...mk('AFC', po.afcSeeds), ...mk('NFC', po.nfcSeeds)]; po.currentRound = 1; STATE.week = 20; generatePreGameBriefing();
+    } else if (r === 1) {
+      const aw = po.rounds[1].filter(g=>g.conf==='AFC').map(win), nw = po.rounds[1].filter(g=>g.conf==='NFC').map(win);
+      po.rounds[2] = [{conf:'AFC',home:aw[0],away:aw[1],played:false,homeScore:0,awayScore:0},{conf:'NFC',home:nw[0],away:nw[1],played:false,homeScore:0,awayScore:0}];
+      po.currentRound = 2; STATE.week = 21; generatePreGameBriefing();
+    } else if (r === 2) {
+      po.rounds[3] = [{conf:'BOWL',home:win(po.rounds[2][0]),away:win(po.rounds[2][1]),played:false,homeScore:0,awayScore:0}];
+      po.currentRound = 3; STATE.week = 22; generatePreGameBriefing();
+    } else {
+      const champ = getTeam(win(po.rounds[3][0]));
+      po.champion = champ.id; STATE.champions.push({ season: STATE.season, team: `${champ.city} ${champ.name}` });
+      if (STATE.awardsHistory && STATE.awardsHistory[0] && STATE.awardsHistory[0].season === STATE.season) STATE.awardsHistory[0].champ = `${champ.city} ${champ.name}`;
+      addInbox(`🏆 ${STATE.season} 챔피언: ${champ.city} ${champ.name}`, '커미셔너', '오프시즌 7라운드 신인 드래프트가 개막합니다!', 'Club');
+      STATE.phase = 'DRAFT'; STATE.week = 23;
+      const rev = [...getStandings()].reverse(), ord = [];
+      for (let rd = 1; rd <= 7; rd++) for (const t of rev) {
+        const owner = STATE.teams.find(tm => tm.picks.some(pk => pk.round === rd && pk.origTeam === t.id)) || t;
+        ord.push({ round: rd, pickNum: ord.length + 1, teamId: owner.id });
+      }
+      STATE.draftOrder = ord; STATE.draftPickIdx = 0; STATE.draftClass = generateDraftClass();
+      SCREEN = 'OFFICE'; OFFICE_TAB = 'front_office'; GM_SUBTAB = 'draft';
+    }
+  }
+  SCREEN = 'OFFICE';
+  saveToLocalStorage(true);
+  renderApp();
+}
+
+function draftPlayer(rookieId) {
+  if (STATE.phase !== 'DRAFT' || STATE.draftPickIdx >= STATE.draftOrder.length) return;
+  const cur = STATE.draftOrder[STATE.draftPickIdx], team = getTeam(cur.teamId);
+  const idx = STATE.draftClass.findIndex(r => r.id === rookieId);
+  if (idx === -1) return;
+  const rookie = STATE.draftClass.splice(idx, 1)[0];
+  team.roster.push(rookie); sortDepthChart(team); STATE.draftPickIdx++;
+  if (team.id === STATE.userTeamId) { showToast(`R${cur.round} #${cur.pickNum} ${rookie.name} (${rookie.pos}) 지명!`, 'success'); SoundFX.firstDown(); }
+  if (STATE.draftPickIdx >= STATE.draftOrder.length || !STATE.draftClass.length) finishOffseason();
+  renderApp();
+}
+
+function simDraft(autoAll = false) {
+  while (STATE.draftPickIdx < STATE.draftOrder.length && STATE.draftClass.length) {
+    const cur = STATE.draftOrder[STATE.draftPickIdx];
+    if (!autoAll && cur.teamId === STATE.userTeamId) break;
+    const t = getTeam(cur.teamId); t.roster.push(STATE.draftClass.shift()); sortDepthChart(t); STATE.draftPickIdx++;
+  }
+  if (STATE.draftPickIdx >= STATE.draftOrder.length || !STATE.draftClass.length) finishOffseason();
+  renderApp();
+}
+
+function finishOffseason() {
+  const prevSeason = STATE.season;
+  STATE.season++; STATE.week = 1; STATE.phase = 'REGULAR'; STATE.playoffs = null;
+  // Real NFL annual salary cap growth (+$16M/yr)
+  STATE.salaryCap = Math.round(((STATE.salaryCap || BASE_SALARY_CAP_2026) + 16.0) * 10) / 10;
+  if (!STATE.hallOfFame) STATE.hallOfFame = [];
+  const retiredLegends = [];
+  const newExpiringFA = [];
+  let totalRetired = 0;
+
+  STATE.teams.forEach(t => {
+    t.w=0; t.l=0; t.t=0; t.pf=0; t.pa=0; t.deadCap=0; t.franchiseTagUsed=false;
+    t.picks = [1,2,3,4,5,6,7].map(r => ({ id: `${t.id}_R${r}_${STATE.season}`, round: r, origTeam: t.id, year: STATE.season }));
+    const surviving = [];
+    t.roster.forEach(p => {
+      // Accumulate career stats
+      if (!p.careerStats) p.careerStats = emptyStats();
+      Object.keys(p.stats).forEach(k => { p.careerStats[k] = (p.careerStats[k] || 0) + (p.stats[k] || 0); });
+      p.seasonsPlayed = (p.seasonsPlayed || 0) + 1;
+      p.peakOvr = Math.max(p.peakOvr || p.ovr, p.ovr);
+      p.age++; p.years--; p.injuredWeeks = 0; p.restructured = false; p.stats = emptyStats();
+
+      // Position-specific NFL aging curve
+      const peakEnd = p.pos === 'RB' ? 25 : (p.pos === 'QB' || p.pos === 'K' || p.pos === 'P') ? 29 : 26;
+      const declineStart = p.pos === 'RB' ? 28 : (p.pos === 'QB' || p.pos === 'K' || p.pos === 'P') ? 35 : 30;
+      const retireStart = p.pos === 'RB' ? 31 : (p.pos === 'QB' || p.pos === 'K' || p.pos === 'P') ? 37 : 33;
+
+      if (p.age <= peakEnd && p.ovr < p.pot) p.ovr = Math.min(p.pot, p.ovr + rand(1, 3));
+      else if (p.age >= declineStart) p.ovr = Math.max(55, p.ovr - rand(1, p.pos === 'RB' ? 4 : 3));
+
+      // Retirement Roll
+      const retProb = p.age < retireStart ? 0 : clamp((p.age - retireStart + 1) * 0.22 + (p.ovr < 68 ? 0.25 : 0), 0.15, 0.92);
+      if (Math.random() < retProb || p.age >= 42) {
+        totalRetired++;
+        if ((p.peakOvr >= 86) || (p.careerStats.passYds >= 12000) || (p.careerStats.rushYds >= 4000)) {
+          const hofEntry = { name: p.name, pos: p.pos, team: t.id, retiredSeason: prevSeason, peakOvr: p.peakOvr, age: p.age, passYds: p.careerStats.passYds, rushYds: p.careerStats.rushYds, recYds: p.careerStats.recYds, sacks: p.careerStats.sacks };
+          STATE.hallOfFame.unshift(hofEntry);
+          retiredLegends.push(`${p.name} (${p.pos}, ${t.id})`);
+        }
+        return; // retired!
+      }
+
+      // Contract Expiration -> Free Agency (AI teams re-sign stars ~65% to keep balance; user's expiring non-tagged players enter FA)
+      if (p.years <= 0) {
+        if (t.id !== STATE.userTeamId && p.ovr >= 76 && Math.random() < 0.65) {
+          p.years = rand(2, 4);
+          surviving.push(p);
+        } else {
+          p.years = rand(1, 3); p.guaranteed = Math.round(p.salary * 0.4 * 10) / 10; p.franchiseTagged = false;
+          newExpiringFA.push(p);
+        }
+      } else {
+        p.franchiseTagged = false;
+        surviving.push(p);
+      }
+    });
+    t.roster = surviving;
+    // Ensure AI teams replenish to 53 with generated depth/FA if needed
+    while (t.roster.length < 51) {
+      const needPos = ['OL','DL','LB','CB','WR','RB','S','TE'][rand(0, 7)];
+      t.roster.push(createPlayer(needPos, 'backup', rand(22, 27)));
+    }
+    sortDepthChart(t);
+    if (t.roster.length > 56) t.roster = t.roster.slice(0, 53);
+  });
+
+  STATE.schedule = generateSchedule(STATE.teams);
+  STATE.freeAgents = [...newExpiringFA, ...generateFreeAgents()].sort((a, b) => b.ovr - a.ovr).slice(0, 60);
+  STATE.staffMarket = ['OC','DC','SCOUT','TRAINER','OC','DC','SCOUT','TRAINER'].map(r => generateStaffMember(r));
+
+  const hofMsg = retiredLegends.length ? `명예의 전당 헌액 은퇴 스타: ${retiredLegends.slice(0, 4).join(', ')}. ` : '';
+  addInbox(`🎉 ${STATE.season} 새 시즌 개막! (샐러리캡 $${STATE.salaryCap.toFixed(1)}M 상향)`, '리그 사무국',
+    `총 ${totalRetired}명의 선수가 은퇴하고 신인 드래프트·FA 이적이 완료되었습니다. ${hofMsg}새 시즌 샐러리캡이 $${STATE.salaryCap.toFixed(1)}M으로 인상되었습니다!`, 'Club');
+  generatePreGameBriefing(); OFFICE_TAB = 'office';
+  showToast(`${STATE.season} 새 시즌 개막! (은퇴 ${totalRetired}명 · 캡 $${STATE.salaryCap.toFixed(1)}M)`, 'success');
+}
+
+// ============================================================================
+// 7. 2D BROADCAST TACTICAL FIELD CANVAS (MATCHING MOCKUP 11607/11609)
+// ============================================================================
+function startFieldAnim(fromX, toX, playType, resultText, resultColor) {
+  if (FIELD_ANIM.frameId) cancelAnimationFrame(FIELD_ANIM.frameId);
+  const m = LIVE_MATCH;
+  const targetIdx = (playType === 'rush') ? 6 : [7, 8, 9, 10][Math.floor(Math.random() * 4)];
+  FIELD_ANIM = {
+    frameId: null, t: 0, speed: FIELD_ANIM.speed || 1,
+    fromX: clamp(fromX, 0, 100), toX: clamp(toX, 0, 100), playType,
+    offPlay: (m && m.lastOffEngineKey) || 'Quick Slant',
+    defPlay: (m && m.lastDefEngineKey) || 'Zone Coverage',
+    offLabel: (m && m.lastOffPlay) || '', defLabel: (m && m.lastDefPlay) || '',
+    offTeamId: (m && m.lastOffTeamId) || (m ? (m.poss===0?m.homeId:m.awayId) : null),
+    defTeamId: (m && m.lastDefTeamId) || (m ? (m.poss===0?m.awayId:m.homeId) : null),
+    firstDownX: (m && m.lastFirstDownX) || clamp(fromX + 10, 0, 100),
+    resultText, resultColor, targetIdx, flipped: MATCH_FLIP,
+    particles: playType === 'td' ? Array.from({length:38},()=>({x:0.86+Math.random()*0.13,y:0.1+Math.random()*0.8,vx:(Math.random()-0.5)*0.008,vy:(Math.random()-0.5)*0.014,size:3+Math.random()*4,color:['#f59e0b','#38bdf8','#10b981','#fff'][rand(0,3)]})) : []
+  };
+  const step = () => {
+    FIELD_ANIM.t = Math.min(1, FIELD_ANIM.t + 0.012 * (FIELD_ANIM.speed || 1));
+    drawFieldCanvas();
+    if (FIELD_ANIM.t < 1) FIELD_ANIM.frameId = requestAnimationFrame(step);
+    else FIELD_ANIM.frameId = null;
+  };
+  FIELD_ANIM.frameId = requestAnimationFrame(step);
+}
+
+function replayFieldAnim() {
+  if (!LIVE_MATCH || FIELD_ANIM.playType === 'idle') return;
+  if (FIELD_ANIM.frameId) cancelAnimationFrame(FIELD_ANIM.frameId);
+  FIELD_ANIM.t = 0;
+  const step = () => {
+    FIELD_ANIM.t = Math.min(1, FIELD_ANIM.t + 0.012 * (FIELD_ANIM.speed || 1));
+    drawFieldCanvas();
+    if (FIELD_ANIM.t < 1) FIELD_ANIM.frameId = requestAnimationFrame(step);
+    else FIELD_ANIM.frameId = null;
+  };
+  FIELD_ANIM.frameId = requestAnimationFrame(step);
+}
+
+function drawArrow(ctx, pts, color, dashed = false, width = 2.2) {
+  if (pts.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  if (dashed) ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke(); ctx.setLineDash([]);
+  const p1 = pts[pts.length - 2], p2 = pts[pts.length - 1];
+  const ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]), len = 7;
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(p2[0], p2[1]);
+  ctx.lineTo(p2[0] - len*Math.cos(ang - 0.5), p2[1] - len*Math.sin(ang - 0.5));
+  ctx.lineTo(p2[0] - len*Math.cos(ang + 0.5), p2[1] - len*Math.sin(ang + 0.5));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+function drawJerseyToken(ctx, x, y, fill, ring, num, r, isCarrier) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.beginPath(); ctx.ellipse(x + 1, y + r * 0.78, r * 1.05, r * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+  if (isCarrier) {
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, r * 1.42, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `800 ${Math.max(8, Math.floor(r * 1.05))}px Inter, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(num), x, y + 0.5);
+  ctx.restore();
+}
+
+function drawFieldCanvas() {
+  const canvas = document.getElementById('field-canvas');
+  if (!canvas || !LIVE_MATCH) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(320, Math.floor(rect.width));
+  const H = W < 520 ? Math.max(220, Math.floor(W * 0.58)) : Math.max(290, Math.min(410, Math.floor(W * 0.48)));
+  if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const home = getTeam(LIVE_MATCH.homeId), away = getTeam(LIVE_MATCH.awayId);
+  const animActive = FIELD_ANIM.t < 1;
+  const offTeam = (animActive && FIELD_ANIM.offTeamId) ? getTeam(FIELD_ANIM.offTeamId) : (LIVE_MATCH.poss === 0 ? home : away);
+  const defTeam = (animActive && FIELD_ANIM.defTeamId) ? getTeam(FIELD_ANIM.defTeamId) : (LIVE_MATCH.poss === 0 ? away : home);
+
+  // Dark turf surround (like mockup 11607)
+  ctx.fillStyle = '#113822';
+  ctx.fillRect(0, 0, W, H);
+  const padX = Math.round(W * 0.04), padY = Math.round(H * 0.08);
+  const fX = padX, fY = padY, fW = W - padX * 2, fH = H - padY * 2;
+  const midY = fY + fH / 2;
+  const ydToX = (yd) => fX + ((yd + 10) / 120) * fW;
+  const pctToY = (pct) => fY + ((pct + 50) / 100) * fH;
+
+  // Crisp White Outer Border
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillRect(fX - 5, fY - 5, fW + 10, fH + 10);
+
+  // Turf 5-yard stripes
+  for (let i = 0; i < 20; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#277046' : '#2d7a4e';
+    const x1 = ydToX(i * 5), x2 = ydToX((i + 1) * 5);
+    ctx.fillRect(x1, fY, x2 - x1 + 1, fH);
+  }
+
+  // Team Endzones with diagonal striping (matching mockup "SURGE")
+  const drawEZ = (x1, x2, tm, rot) => {
+    ctx.save(); ctx.beginPath(); ctx.rect(x1, fY, x2 - x1, fH); ctx.clip();
+    ctx.fillStyle = tm.color; ctx.fillRect(x1, fY, x2 - x1, fH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 4;
+    for (let s = x1 - fH; s < x2 + fH; s += 11) { ctx.beginPath(); ctx.moveTo(s, fY); ctx.lineTo(s + fH, fY + fH); ctx.stroke(); }
+    ctx.fillStyle = tm.accent || '#facc15';
+    ctx.font = `900 ${Math.max(13, Math.floor(fH * 0.105))}px Inter, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.translate((x1 + x2) / 2, midY); ctx.rotate(rot);
+    ctx.fillText(tm.name.toUpperCase(), 0, 0);
+    ctx.restore();
+  };
+  drawEZ(fX, ydToX(0), home, -Math.PI / 2);
+  drawEZ(ydToX(100), fX + fW, home, Math.PI / 2);
+
+  // Yellow Goalposts
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(fX - 10, midY - 14); ctx.lineTo(fX - 4, midY - 8); ctx.lineTo(fX - 4, midY + 8); ctx.lineTo(fX - 10, midY + 14);
+  ctx.moveTo(fX + fW + 10, midY - 14); ctx.lineTo(fX + fW + 4, midY - 8); ctx.lineTo(fX + fW + 4, midY + 8); ctx.lineTo(fX + fW + 10, midY + 14);
+  ctx.stroke();
+
+  // Midfield Team Crest Circle
+  ctx.save();
+  const mx = ydToX(50), mr = Math.min(24, fH * 0.11);
+  ctx.fillStyle = home.color; ctx.globalAlpha = 0.72;
+  ctx.beginPath(); ctx.arc(mx, midY, mr, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = home.accent; ctx.lineWidth = 2; ctx.stroke();
+  ctx.globalAlpha = 0.85;
+  ctx.strokeStyle = home.accent; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(mx - mr*0.55, midY); ctx.lineTo(mx - mr*0.2, midY); ctx.lineTo(mx - mr*0.05, midY - mr*0.45); ctx.lineTo(mx + mr*0.15, midY + mr*0.45); ctx.lineTo(mx + mr*0.3, midY); ctx.lineTo(mx + mr*0.55, midY); ctx.stroke();
+  ctx.restore();
+
+  // Yard lines, Hash marks & Numbers
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = `800 ${Math.max(10, Math.floor(fH * 0.055))}px JetBrains Mono, monospace`;
+  ctx.textAlign = 'center';
+  for (let y = 0; y <= 100; y += 5) {
+    const x = ydToX(y);
+    ctx.beginPath(); ctx.moveTo(x, fY); ctx.lineTo(x, fY + fH); ctx.stroke();
+    if (y > 0 && y < 100 && y % 10 === 0) {
+      const lbl = y <= 50 ? y : 100 - y;
+      ctx.fillText(lbl, x, fY + 18);
+      ctx.fillText(lbl, x, fY + fH - 10);
+    }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.38)';
+  for (let y = 1; y < 100; y++) {
+    const x = ydToX(y);
+    ctx.beginPath();
+    ctx.moveTo(x, fY + fH * 0.36); ctx.lineTo(x, fY + fH * 0.385);
+    ctx.moveTo(x, fY + fH * 0.615); ctx.lineTo(x, fY + fH * 0.64);
+    ctx.stroke();
+  }
+
+  // Glowing Blue LOS & Yellow First Down Line + Orange Sideline Chain Markers
+  const baseYd = animActive ? FIELD_ANIM.fromX : LIVE_MATCH.yardLine;
+  const fdYd = animActive ? FIELD_ANIM.firstDownX : Math.min(100, LIVE_MATCH.yardLine + LIVE_MATCH.dist);
+  const losX = ydToX(baseYd), fdX = ydToX(fdYd);
+
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(losX, fY); ctx.lineTo(losX, fY + fH); ctx.stroke();
+  ctx.fillStyle = '#f97316';
+  ctx.beginPath(); ctx.arc(losX, fY - 3, 4, 0, Math.PI * 2); ctx.arc(losX, fY + fH + 3, 4, 0, Math.PI * 2); ctx.fill();
+
+  if (fdYd < 100) {
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(fdX, fY); ctx.lineTo(fdX, fY + fH); ctx.stroke();
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath(); ctx.arc(fdX, fY - 3, 4, 0, Math.PI * 2); ctx.arc(fdX, fY + fH + 3, 4, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Player Jersey Numbers from actual roster
+  const offNums = [72, 71, 66, 65, 59, (getKeyPlayers(offTeam).qb?.jersey || 11), (getKeyPlayers(offTeam).rb?.jersey || 28), (getKeyPlayers(offTeam).wrs[0]?.jersey || 17), (getKeyPlayers(offTeam).wrs[1]?.jersey || 12), 41, (getKeyPlayers(offTeam).wrs[2]?.jersey || 87)];
+  const defNums = [96, 90, 94, 97, 46, 56, 36, 32, 34, 26, 22];
+
+  const t = FIELD_ANIM.t;
+  const pt = FIELD_ANIM.playType;
+  const flipSign = (animActive ? FIELD_ANIM.flipped : MATCH_FLIP) ? -1 : 1;
+  const selectedOffObj = OFF_PLAYS.find(p => p.id === MATCH_SELECTED_PLAY) || OFF_PLAYS[0];
+  const activeOffKey = animActive ? FIELD_ANIM.offPlay : selectedOffObj.engineKey;
+  const activeDefKey = animActive ? FIELD_ANIM.defPlay : (DEF_PLAYS.find(p => p.id === MATCH_SELECTED_PLAY)?.engineKey || 'Zone Coverage');
+  const gained = FIELD_ANIM.toX - FIELD_ANIM.fromX;
+
+  const easeOut = (u) => 1 - Math.pow(1 - clamp(u, 0, 1), 2.2);
+  const p1 = easeOut(t / 0.25), p2 = easeOut((t - 0.22) / 0.43), p3 = easeOut((t - 0.62) / 0.38);
+  const isPass = animActive ? (['pass','inc','int','td'].includes(pt) && !['Inside Run','Outside Zone'].includes(activeOffKey)) : !['Inside Run','Outside Zone','FG','PUNT'].includes(activeOffKey);
+  const isRush = animActive ? (pt === 'rush' || (pt === 'td' && ['Inside Run','Outside Zone'].includes(activeOffKey))) : ['Inside Run','Outside Zone'].includes(activeOffKey);
+  const isKick = animActive ? (pt === 'fg' || pt === 'punt') : ['FG','PUNT'].includes(activeOffKey);
+  const isSack = animActive && pt === 'sack';
+
+  const offStart = [
+    { dx:-1.2, dy:-11 }, { dx:-1.2, dy:-5.5 }, { dx:-0.9, dy:0 }, { dx:-1.2, dy:5.5 }, { dx:-1.2, dy:11 },
+    { dx: isKick ? -7 : -3.8, dy: 0 },
+    { dx: isKick ? -10.5 : -7.2, dy: isKick ? 0 : 4 * flipSign },
+    { dx:-1.4, dy:-38 * flipSign }, { dx:-1.4, dy:38 * flipSign },
+    { dx:-2.5, dy:-22 * flipSign }, { dx:-1.4, dy:20 * flipSign }
+  ];
+  const defStart = [
+    { dx:1.4, dy:-10 }, { dx:1.4, dy:-3.5 }, { dx:1.4, dy:3.5 }, { dx:1.4, dy:10 },
+    { dx:4.6, dy:-14 }, { dx:4.6, dy:0 }, { dx:4.6, dy:14 },
+    { dx:3.4, dy:-36 * flipSign }, { dx:3.4, dy:36 * flipSign },
+    { dx:12, dy:-14 * flipSign }, { dx:12, dy:14 * flipSign }
+  ];
+
+  // PRE-SNAP ROUTE PREVIEW (Matching Mockup 11607!)
+  if (!animActive && MATCH_SHOW_ROUTES && !LIVE_MATCH.finished) {
+    const isUserOff = offTeam.id === STATE.userTeamId;
+    if (isUserOff) {
+      if (isRush) {
+        const rbX = ydToX(baseYd + offStart[6].dx), rbY = pctToY(offStart[6].dy);
+        const endY = activeOffKey === 'Outside Zone' ? pctToY(-26 * flipSign) : pctToY(2 * flipSign);
+        drawArrow(ctx, [[rbX, rbY], [ydToX(baseYd + 2), endY], [ydToX(Math.min(98, baseYd + 11)), endY]], '#f59e0b', false, 2.6);
+      } else if (!isKick) {
+        // Draw crisp Madden/FM pre-snap route arrows directly on the field!
+        const rSpecs = [
+          { idx: 7, pts: [[baseYd+5, -38*flipSign], [baseYd+13, (activeOffKey==='Quick Slant'?-22:-38)*flipSign]], col: '#38bdf8' },
+          { idx: 8, pts: [[baseYd+5, 38*flipSign], [baseYd+13, (activeOffKey==='Quick Slant'?22:38)*flipSign]], col: '#38bdf8' },
+          { idx: 9, pts: [[baseYd+4, -22*flipSign], [baseYd+(activeOffKey==='Deep Shot'?24:12), (activeOffKey==='Play Action'?10:-12)*flipSign]], col: '#f59e0b' },
+          { idx: 10, pts: [[baseYd+4, 20*flipSign], [baseYd+10, 8*flipSign]], col: '#38bdf8' },
+        ];
+        rSpecs.forEach(sp => {
+          const sx = ydToX(baseYd + offStart[sp.idx].dx), sy = pctToY(offStart[sp.idx].dy);
+          const pts = [[sx, sy], ...sp.pts.map(([yd, py]) => [ydToX(clamp(yd, 0, 99)), pctToY(clamp(py, -45, 45))])];
+          drawArrow(ctx, pts, sp.col, false, 2.2);
+        });
+      }
+    } else {
+      // Defensive coverage / blitz preview on field!
+      if (activeDefKey === 'Zone Blitz' || activeDefKey === 'Run Stuff') {
+        [4, 5].forEach(i => drawArrow(ctx, [[ydToX(baseYd+defStart[i].dx), pctToY(defStart[i].dy)], [ydToX(baseYd-3), midY]], '#ef4444', true, 2.2));
+      } else {
+        [9, 10].forEach(i => {
+          ctx.save(); ctx.fillStyle = 'rgba(56,189,248,0.16)'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.ellipse(ydToX(baseYd+14), pctToY(defStart[i].dy), 28, 22, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore();
+        });
+      }
+    }
+  }
+
+  // Animated 11v11 Movement
+  const tgtIdx = FIELD_ANIM.targetIdx || 7;
+  const routeEndY = (activeOffKey === 'Outside Zone' ? -26 : activeOffKey === 'Inside Run' ? 2 : (offStart[tgtIdx]?.dy || -20) * 0.45) * (animActive ? 1 : flipSign);
+
+  const offPos = offStart.map((pl, idx) => {
+    let yd = baseYd + pl.dx, py = pl.dy;
+    if (animActive && t > 0.01) {
+      if (idx <= 4) yd += (isRush ? Math.min(3.2, Math.max(-1, gained*0.2))*p2 : -1.1*p1) + Math.sin(t*28+idx)*0.22;
+      else if (idx === 5) { yd += (isRush ? -2.1 : -4.0)*p1; if (isSack) yd = baseYd + gained * easeOut(t/0.7); }
+      else if (idx === 6) {
+        if (isRush) { yd = baseYd + pl.dx + (gained - pl.dx)*easeOut((t-0.14)/0.82); py = pl.dy + (routeEndY - pl.dy)*easeOut((t-0.12)/0.45); }
+        else if (isKick) yd += 3.5*p1;
+        else { yd += 2.5*p2; py += 10*p2; }
+      } else {
+        const isPri = idx === tgtIdx && isPass;
+        const cYd = isPri ? clamp(baseYd + gained*0.72, 2, 99) : clamp(baseYd + Math.max(8, Math.min(22, Math.abs(gained)+6)), 2, 98);
+        const eYd = isPri ? FIELD_ANIM.toX : clamp(cYd + 4, 2, 99);
+        const eY = isPri ? routeEndY : clamp(pl.dy * 0.75, -40, 40);
+        if (t <= 0.62) { const u = easeOut(t/0.62); yd = baseYd + pl.dx + (cYd - (baseYd + pl.dx))*u; py = pl.dy + (eY - pl.dy)*u; }
+        else { yd = cYd + (eYd - cYd)*p3; py = eY; }
+      }
+    }
+    return { x: ydToX(clamp(yd, -6, 106)), y: pctToY(clamp(py, -46, 46)), yd: clamp(yd, -6, 106), num: offNums[idx] };
+  });
+
+  const defPos = defStart.map((pl, idx) => {
+    let yd = baseYd + pl.dx, py = pl.dy;
+    if (animActive && t > 0.01) {
+      if (idx <= 3) {
+        if (isSack && idx === 1) { yd = baseYd + pl.dx + (offPos[5].yd - (baseYd + pl.dx))*easeOut(t/0.65); py = pl.dy*(1 - easeOut(t/0.65)); }
+        else yd += (isRush ? Math.min(2, gained*0.2) : -1.4)*p1;
+      } else if (idx <= 6) {
+        const tYd = isRush ? offPos[6].yd : (baseYd + gained*0.65);
+        yd += (tYd - (baseYd + pl.dx))*p2*0.72; py += ((isRush?routeEndY:pl.dy*0.65) - pl.dy)*p2*0.72;
+      } else {
+        const mOff = offPos[idx === 7 ? 7 : idx === 8 ? 8 : idx === 9 ? 9 : 10];
+        const desYd = Math.min(102, (mOff ? mOff.yd : baseYd+12) + 2.5);
+        yd = baseYd + pl.dx + (desYd - (baseYd + pl.dx))*easeOut(t/0.85);
+      }
+    }
+    return { x: ydToX(clamp(yd, -6, 106)), y: pctToY(clamp(py, -46, 46)), num: defNums[idx] };
+  });
+
+  // Ball position & 3D arc
+  let ballX = offPos[5].x, ballY = offPos[5].y, ballH = 0, carrier = -1;
+  if (!animActive) { ballX = ydToX(baseYd); ballY = midY; }
+  else if (isSack) { ballX = offPos[5].x; ballY = offPos[5].y; carrier = 5; }
+  else if (isRush) {
+    if (t < 0.18) { const u = t/0.18; ballX = offPos[5].x + (offPos[6].x-offPos[5].x)*u; ballY = offPos[5].y + (offPos[6].y-offPos[5].y)*u; carrier = 5; }
+    else { ballX = offPos[6].x; ballY = offPos[6].y; carrier = 6; }
+  } else if (isPass) {
+    const tgt = offPos[tgtIdx];
+    if (t < 0.28) { ballX = offPos[5].x; ballY = offPos[5].y; carrier = 5; }
+    else if (t < 0.64) { const u = (t-0.28)/0.36; ballX = offPos[5].x + (tgt.x-offPos[5].x)*u; ballY = offPos[5].y + (tgt.y-offPos[5].y)*u; ballH = Math.sin(u*Math.PI)*34; }
+    else { ballX = tgt.x + (pt==='inc'?8:0); ballY = tgt.y + (pt==='inc'?6:0); carrier = (pt==='inc'||pt==='int') ? -1 : tgtIdx; }
+  } else if (isKick) {
+    const u = easeOut((t-0.15)/0.8);
+    ballX = offPos[6].x + (ydToX(FIELD_ANIM.toX) - offPos[6].x)*u;
+    ballY = offPos[6].y + (midY - offPos[6].y)*u; ballH = Math.sin(u*Math.PI)*50;
+  }
+
+  // Live animated trail
+  if (animActive && MATCH_SHOW_ROUTES && t > 0.2 && (isPass || isKick)) {
+    ctx.save(); ctx.strokeStyle = FIELD_ANIM.resultColor; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(offPos[isKick?6:5].x, offPos[isKick?6:5].y);
+    ctx.quadraticCurveTo((offPos[isKick?6:5].x+ballX)/2, (offPos[isKick?6:5].y+ballY)/2 - ballH*1.1, ballX, ballY - ballH);
+    ctx.stroke(); ctx.restore();
+  }
+
+  // Draw all 22 numbered tokens
+  const tokR = Math.max(7, Math.min(10.5, W / 74));
+  defPos.forEach(p => drawJerseyToken(ctx, p.x, p.y, '#1e293b', '#f8fafc', p.num, tokR, false));
+  offPos.forEach((p, i) => drawJerseyToken(ctx, p.x, p.y, offTeam.color, offTeam.accent || '#facc15', p.num, tokR, i === carrier));
+
+  // Football + Shadow
+  if (ballH > 1) {
+    ctx.fillStyle = 'rgba(0,0,0,0.42)';
+    ctx.beginPath(); ctx.ellipse(ballX, ballY + 4, 5.5*(1-ballH/120), 2.8*(1-ballH/120), 0, 0, Math.PI*2); ctx.fill();
+  }
+  const bs = 1 + ballH / 75;
+  ctx.save(); ctx.translate(ballX, ballY - ballH); ctx.scale(bs, bs);
+  ctx.fillStyle = '#9a3412'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.ellipse(0, 0, 6.5, 4, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#fef3c7'; ctx.beginPath(); ctx.moveTo(-2.2, 0); ctx.lineTo(2.2, 0); ctx.stroke();
+  ctx.restore();
+
+  if (animActive && pt === 'td' && FIELD_ANIM.particles.length) {
+    FIELD_ANIM.particles.forEach(ptc => {
+      ctx.fillStyle = ptc.color;
+      ctx.fillRect((ptc.x + ptc.vx*t*18)*W, (ptc.y + ptc.vy*t*18)*H, ptc.size, ptc.size*0.65);
+    });
+  }
+
+  if (animActive && FIELD_ANIM.resultText && t > 0.52) {
+    ctx.save();
+    const bw = Math.min(260, W * 0.55), bh = 30;
+    ctx.fillStyle = 'rgba(9, 14, 26, 0.9)';
+    ctx.beginPath(); ctx.roundRect(W/2 - bw/2, 10, bw, bh, 7); ctx.fill();
+    ctx.strokeStyle = FIELD_ANIM.resultColor; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = FIELD_ANIM.resultColor; ctx.font = '900 13px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(FIELD_ANIM.resultText, W/2, 25);
+    ctx.restore();
+  }
+}
+
+// ============================================================================
+// 8. FULL FM APPLICATION RENDERER (NEW CAREER / OFFICE / LIVE MATCH)
+// ============================================================================
+function showToast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  const bg = type === 'success' ? 'bg-emerald-600 border-emerald-400' : type === 'error' ? 'bg-rose-600 border-rose-400' : 'bg-slate-800 border-sky-400';
+  el.className = `${bg} border text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-lg shadow-xl pointer-events-auto`;
+  el.textContent = msg; c.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2600);
+}
+function openModal(title, html) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = html;
+  const ov = document.getElementById('modal-overlay'); ov.classList.remove('hidden'); ov.classList.add('flex');
+}
+function closeModal() { const ov = document.getElementById('modal-overlay'); ov.classList.add('hidden'); ov.classList.remove('flex'); }
+
+function renderApp() {
+  const root = document.getElementById('app-root');
+  if (SCREEN === 'NEW_CAREER') {
+    root.innerHTML = renderNewCareerScreen();
+  } else if (SCREEN === 'MATCH') {
+    root.innerHTML = renderMatchScreen();
+    setTimeout(drawFieldCanvas, 15);
+  } else {
+    root.innerHTML = renderOfficeShell();
+  }
+}
+
+// --- SCREEN A: NEW CAREER (MOCKUP 11601) ---
+function renderNewCareerScreen() {
+  const renderConfGrid = (conf, label) => {
+    const divs = DIVISIONS.filter(d => d.conf === conf);
+    return `
+      <div>
+        <div class="text-sm font-black text-white border-b border-slate-700 pb-2 mb-3">${label}</div>
+        <div class="space-y-2.5">
+          ${divs.map(d => `
+            <div class="flex items-center gap-2">
+              <div class="w-11 text-[11px] font-bold text-slate-400 shrink-0">${d.div}</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+                ${d.teams.map(t => `
+                  <button onclick="selectNewCareerTeam('${t.id}')" class="p-2 rounded-lg border text-center transition flex flex-col items-center gap-1 ${NEW_CAREER_TEAM===t.id ? 'bg-sky-500/20 border-amber-400 shadow-lg' : 'bg-[#161f32] border-[#25334d] hover:border-sky-400'}">
+                    ${renderTeamCrest(t, 34)}
+                    <div class="text-[11px] font-bold text-white truncate w-full">${t.city}</div>
+                    <div class="text-[9px] tracking-tighter">${renderStars(t.stars)}</div>
+                  </button>`).join('')}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  };
+  const selObj = DIVISIONS.flatMap(d => d.teams).find(t => t.id === NEW_CAREER_TEAM);
+  return `
+    <div class="min-h-screen flex flex-col lg:flex-row bg-[#0e1422]">
+      <!-- Left Coach Setup Sidebar -->
+      <aside class="w-full lg:w-72 bg-[#0b101b] border-b lg:border-b-0 lg:border-r border-slate-800 p-5 flex flex-col justify-between shrink-0">
+        <div class="space-y-5">
+          <h1 class="text-2xl font-black text-white tracking-tight">New Career</h1>
+          <div class="space-y-2">
+            <div class="px-3 py-1.5 rounded border border-slate-700 bg-slate-900/80 text-xs font-semibold text-emerald-400">✓ 감독 프로필 설정</div>
+            <div class="px-3 py-1.5 rounded border border-amber-400/80 bg-amber-500/10 text-xs font-bold text-white">2 구단 선택 (32 프로팀)</div>
+          </div>
+          <div class="border-t border-slate-800 pt-4 space-y-2">
+            <label class="text-xs font-bold text-slate-400">Head Coach (감독명)</label>
+            <input id="nc-coach-input" value="${NEW_CAREER_COACH}" oninput="NEW_CAREER_COACH=this.value" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-bold text-white focus:border-sky-400 outline-none" />
+          </div>
+          <div class="border-t border-slate-800 pt-4 text-xs text-slate-400 space-y-1.5">
+            <div class="font-bold text-slate-300">선택된 구단</div>
+            <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+              ${renderTeamCrest(selObj, 36)}
+              <div>
+                <div class="text-sm font-extrabold text-white">${selObj.city} ${selObj.name}</div>
+                <div class="text-[11px]">${renderStars(selObj.stars)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 space-y-2">
+          <button onclick="startNewCareerFromPicker()" class="w-full py-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-sm shadow-lg transition">🆕 새 게임 시작 →</button>
+          <button onclick="openSaveLoadModal()" class="w-full py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs">📂 저장된 게임 불러오기</button>
+          ${STATE ? `<button onclick="SCREEN='OFFICE';renderApp();" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">현재 커리어로 돌아가기</button>` : ''}
+        </div>
+      </aside>
+      <!-- Right 32-Team Grid -->
+      <section class="flex-1 p-4 sm:p-5 pb-28 lg:pb-6 overflow-y-auto">
+        <div class="flex flex-wrap items-center gap-4 border-b border-slate-800 pb-2 mb-5 text-xs sm:text-sm font-bold">
+          <span class="text-white border-b-2 border-amber-400 pb-2">Pro Teams (32)</span>
+          <span class="text-slate-400 pb-2">53-Man Roster · $301.2M Cap · Madden Playbook</span>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          ${renderConfGrid('AFC', 'AFC Conference')}
+          ${renderConfGrid('NFC', 'NFC Conference')}
+        </div>
+      </section>
+
+      <!-- Mobile Sticky Bottom CTA Bar (Always visible while scrolling 32 teams!) -->
+      <div class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b101b]/95 backdrop-blur border-t border-slate-700 p-3 flex items-center justify-between gap-3 mobile-bottom-nav">
+        <div class="flex items-center gap-2 min-w-0">
+          ${renderTeamCrest(selObj, 34)}
+          <div class="min-w-0">
+            <div class="text-xs font-extrabold text-white truncate">${selObj.city} ${selObj.name}</div>
+            <div class="text-[10px]">${renderStars(selObj.stars)}</div>
+          </div>
+        </div>
+        <button onclick="startNewCareerFromPicker()" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs shrink-0 shadow-lg">🆕 새 게임 시작 →</button>
+      </div>
+    </div>`;
+}
+
+function openNewCareerScreen() {
+  stopAutoPlay();
+  closeModal();
+  MOBILE_MENU_OPEN = false;
+  NEW_CAREER_TEAM = (STATE && STATE.userTeamId) ? STATE.userTeamId : 'LAC';
+  NEW_CAREER_COACH = (STATE && STATE.coachName) ? STATE.coachName : 'Cole Harper';
+  SCREEN = 'NEW_CAREER';
+  renderApp();
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+
+function selectNewCareerTeam(teamId) {
+  const inp = document.getElementById('nc-coach-input');
+  if (inp) NEW_CAREER_COACH = inp.value;
+  NEW_CAREER_TEAM = teamId;
+  renderApp();
+}
+
+function startNewCareerFromPicker() {
+  stopAutoPlay();
+  closeModal();
+  MOBILE_MENU_OPEN = false;
+  const inp = document.getElementById('nc-coach-input');
+  if (inp && inp.value.trim()) NEW_CAREER_COACH = inp.value.trim();
+  const coach = (NEW_CAREER_COACH || '').trim() || 'Cole Harper';
+  TRADE_USER_ASSETS = [];
+  TRADE_AI_ASSETS = [];
+  INBOX_CAT = 'ALL';
+  ROSTER_FILTER = 'ALL';
+  GM_SUBTAB = 'cap';
+  createNewFranchise(NEW_CAREER_TEAM || 'LAC', coach);
+  saveToLocalStorage(true);
+  SCREEN = 'OFFICE';
+  OFFICE_TAB = 'office';
+  renderApp();
+  try { window.scrollTo(0, 0); } catch (e) {}
+  showToast(`🆕 ${getUserTeam().city} ${getUserTeam().name} 새 게임을 시작했습니다!`, 'success');
+}
+
+// --- SCREEN B: FM OFFICE SHELL (LEFT SIDEBAR + TOP BLUE BAR, MOCKUP 11603/11605) ---
+function renderOfficeShell() {
+  const ut = getUserTeam();
+  const unreadCount = STATE.inbox.filter(m => !m.read).length;
+  const nextG = getUserNextGame();
+  const tabTitles = {
+    office: "감독실 (Head Coach's Office)", inbox: '인박스 (Inbox)', roster: '53인 로스터 (Roster)',
+    playbook: '플레이북 & 전술 (Playbook)', training: '훈련 (Training)', schedule: '일정 (Schedule)',
+    scouting: '스카우팅 & 드래프트 보드', standings: '리그 순위표 (Standings)', staff: '코칭 스태프 (Coaching Staff)', history: '명예의 전당 & 역대 수상', front_office: '프런트 오피스 (Cap/FA/Trade/Draft)'
+  };
+  const phaseLabel = STATE.phase === 'REGULAR' ? `정규시즌 ${STATE.week}주차`
+    : STATE.phase === 'PLAYOFFS' ? STATE.playoffs.roundNames[STATE.playoffs.currentRound] : '오프시즌 드래프트';
+
+  const navBtn = (id, icon, label, badge = 0) => `
+    <button onclick="OFFICE_TAB='${id}';renderApp();" class="fm-sidebar-item ${OFFICE_TAB===id?'active':''}">
+      <span>${icon}</span><span class="truncate">${label}</span>
+      ${badge > 0 ? `<span class="ml-auto px-1.5 py-0.5 text-[10px] font-black rounded-full bg-rose-500 text-white">${badge}</span>` : ''}
+    </button>`;
+
+  let mainBody = '';
+  if (OFFICE_TAB === 'office') mainBody = renderHeadCoachOffice();
+  else if (OFFICE_TAB === 'inbox') mainBody = renderInboxView();
+  else if (OFFICE_TAB === 'roster') mainBody = renderRosterView();
+  else if (OFFICE_TAB === 'playbook') mainBody = renderPlaybookView();
+  else if (OFFICE_TAB === 'training') mainBody = renderTrainingView();
+  else if (OFFICE_TAB === 'schedule') mainBody = renderScheduleView();
+  else if (OFFICE_TAB === 'scouting') mainBody = renderScoutingView();
+  else if (OFFICE_TAB === 'standings') mainBody = renderStandingsView();
+  else if (OFFICE_TAB === 'staff') mainBody = renderStaffView();
+  else if (OFFICE_TAB === 'history') mainBody = renderHistoryView();
+  else if (OFFICE_TAB === 'front_office') mainBody = renderFrontOfficeView();
+
+  const mTab = (id, icon, lbl, badge = 0) => `
+    <button onclick="MOBILE_MENU_OPEN=false;OFFICE_TAB='${id}';renderApp();" class="flex-1 flex flex-col items-center justify-center py-2 relative ${OFFICE_TAB===id && !MOBILE_MENU_OPEN ? 'text-amber-400 font-extrabold' : 'text-slate-400 font-semibold'}">
+      <span class="text-lg leading-none">${icon}</span>
+      <span class="text-[10px] mt-1">${lbl}</span>
+      ${badge > 0 ? `<span class="absolute top-1 right-1/4 px-1 text-[9px] font-black rounded-full bg-rose-500 text-white">${badge}</span>` : ''}
+    </button>`;
+
+  const mobileDrawer = MOBILE_MENU_OPEN ? `
+    <div onclick="MOBILE_MENU_OPEN=false;renderApp();" class="md:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-end">
+      <div onclick="event.stopPropagation()" class="w-full bg-[#0f172a] border-t border-slate-700 rounded-t-2xl p-4 pb-24 space-y-3 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <span class="text-sm font-extrabold text-white">전체 메뉴 · ${ut.city} ${ut.name}</span>
+          <button onclick="MOBILE_MENU_OPEN=false;renderApp();" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-xs font-bold">닫기 ✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          ${[
+            ['office','🏠','감독실 (Office)'],['inbox','📬',`인박스 (${unreadCount})`],
+            ['roster','👥','53인 로스터'],['playbook','📖','플레이북 & 전술'],
+            ['training','🏋️','훈련 / 템포'],['schedule','📅','시즌 일정'],
+            ['scouting','🔍','스카우팅 보드'],['standings','🏆','리그 순위표'],
+            ['staff','🧢','코칭 스태프'],['front_office','💼','프런트 오피스'],
+            ['history','🏅','명예의 전당 / 기록']
+          ].map(([id,ic,lb]) => `<button onclick="MOBILE_MENU_OPEN=false;OFFICE_TAB='${id}';renderApp();" class="p-3 rounded-xl border text-left font-bold flex items-center gap-2 ${OFFICE_TAB===id?'bg-sky-500/20 border-amber-400 text-white':'bg-slate-900 border-slate-800 text-slate-300'}"><span>${ic}</span><span>${lb}</span></button>`).join('')}
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs">
+          <button onclick="MOBILE_MENU_OPEN=false;openSaveLoadModal();" class="py-3 rounded-xl bg-emerald-600 text-white font-extrabold">💾 저장 / 불러오기</button>
+          <button onclick="openNewCareerScreen();" class="py-3 rounded-xl bg-amber-500 text-slate-950 font-extrabold">🆕 새 게임 (구단 선택)</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="min-h-screen flex flex-col md:flex-row">
+      <!-- DESKTOP LEFT FM SIDEBAR (hidden on mobile, replaced by mobile bottom nav + drawer) -->
+      <aside class="hidden md:flex md:w-56 bg-[#0d121f] border-r border-slate-800 flex-col shrink-0">
+        <div class="p-3 border-b border-slate-800">
+          <div class="flex items-center gap-2.5 p-2 rounded-lg bg-[#141c2e] border-l-4 border-amber-400">
+            ${renderTeamCrest(ut, 36)}
+            <div class="min-w-0">
+              <div class="text-xs font-extrabold text-white truncate">${ut.city} ${ut.name}</div>
+              <div class="text-[10px] text-slate-400 font-semibold">${ut.conf} ${ut.div} · ${ut.w}-${ut.l}</div>
+            </div>
+          </div>
+        </div>
+        <nav class="p-2.5 flex flex-col gap-1 flex-1">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 pt-1 pb-0.5">Club</div>
+          ${navBtn('office', '🏠', '감독실 (Office)')}
+          ${navBtn('inbox', '📬', '인박스 (Inbox)', unreadCount)}
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 pt-3 pb-0.5">Roster</div>
+          ${navBtn('roster', '👥', '로스터 (53인)')}
+          ${navBtn('playbook', '📖', '플레이북 & 전술')}
+          ${navBtn('training', '🏋️', '훈련 (Training)')}
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 pt-3 pb-0.5">League</div>
+          ${navBtn('schedule', '📅', '일정 (Schedule)')}
+          ${navBtn('scouting', '🔍', '스카우팅')}
+          ${navBtn('standings', '🏆', '순위표')}
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 pt-3 pb-0.5">Operations</div>
+          ${navBtn('staff', '🧢', '코칭 스태프')}
+          ${navBtn('front_office', '💼', '프런트 오피스')}
+          ${navBtn('history', '🏅', '명예의 전당 / 기록')}
+        </nav>
+        <div class="p-3 border-t border-slate-800 space-y-1.5 text-xs">
+          <button onclick="openSaveLoadModal()" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-extrabold">💾 새 게임 / 저장 / 로드</button>
+          <button onclick="openSettingsModal()" class="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 font-semibold">⚙️ 커스텀 로스터 JSON</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN WORKSPACE -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- FM TOP BROADCAST BAR (Optimized for both Mobile & Desktop) -->
+        <header class="fm-topbar px-3 sm:px-4 py-2 flex items-center justify-between gap-2 sticky top-0 z-20">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="md:hidden shrink-0">${renderTeamCrest(ut, 32)}</div>
+            <div class="min-w-0">
+              <h1 class="text-xs sm:text-base font-extrabold text-white truncate">${tabTitles[OFFICE_TAB] || '감독실'}</h1>
+              <div class="md:hidden text-[10px] text-sky-200/90 font-semibold truncate">${ut.name} (${ut.w}-${ut.l}) · ${STATE.season} ${phaseLabel} · 캡 $${getTeamCapSpace(ut).toFixed(1)}M</div>
+            </div>
+            <div class="hidden lg:flex items-center gap-4 text-[11px] text-sky-100/80 border-l border-white/15 pl-3">
+              <div><span class="opacity-65 block text-[9px]">Today</span><strong>${nextG ? 'Game Prep' : 'Rest'}</strong></div>
+              <div><span class="opacity-65 block text-[9px]">Season</span><strong>${STATE.season} · ${phaseLabel}</strong></div>
+              <div><span class="opacity-65 block text-[9px]">Cap Space</span><strong class="font-mono-num text-emerald-300">$${getTeamCapSpace(ut).toFixed(1)}M</strong></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="openSaveLoadModal()" class="px-2.5 py-2 sm:py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-white/15 text-xs font-bold text-emerald-300" title="새 게임 / 저장 / 로드">💾<span class="hidden sm:inline ml-1">저장/로드</span></button>
+            <button onclick="SoundFX.enabled=!SoundFX.enabled;renderApp();" class="px-2.5 py-2 sm:py-1.5 rounded bg-slate-900/60 hover:bg-slate-900 border border-white/15 text-xs font-bold text-slate-200">${SoundFX.enabled?'🔊':'🔇'}</button>
+            ${nextG && !nextG.played ? `<button onclick="enterLiveMatch()" class="hidden sm:inline-block px-3 py-1.5 rounded bg-slate-900/70 hover:bg-slate-800 border border-white/20 text-xs font-bold text-white">Go to Game Day</button>` : ''}
+            <button onclick="handleContinueBtn()" class="px-3.5 sm:px-4 py-2 sm:py-1.5 rounded bg-[#0ea5e9] hover:bg-[#38bdf8] text-white font-extrabold text-xs sm:text-sm shadow-lg transition">
+              Continue →
+            </button>
+          </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA (Extra bottom padding on mobile for bottom nav bar) -->
+        <main class="flex-1 p-3 sm:p-5 pb-24 md:pb-5 overflow-y-auto space-y-4">
+          ${mainBody}
+        </main>
+      </div>
+    </div>
+
+    <!-- MOBILE FIXED BOTTOM TAB BAR -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b101d]/95 backdrop-blur border-t border-slate-800 flex items-center mobile-bottom-nav">
+      ${mTab('office', '🏠', '감독실')}
+      ${mTab('inbox', '📬', '인박스', unreadCount)}
+      ${mTab('roster', '👥', '로스터')}
+      ${mTab('playbook', '📖', '전술')}
+      <button onclick="MOBILE_MENU_OPEN=!MOBILE_MENU_OPEN;renderApp();" class="flex-1 flex flex-col items-center justify-center py-2 ${MOBILE_MENU_OPEN ? 'text-amber-400 font-extrabold' : 'text-slate-400 font-semibold'}">
+        <span class="text-lg leading-none">☰</span>
+        <span class="text-[10px] mt-1">전체메뉴</span>
+      </button>
+    </nav>
+    ${mobileDrawer}`;
+}
+
+function handleContinueBtn() {
+  if (STATE.phase === 'DRAFT') { OFFICE_TAB = 'front_office'; GM_SUBTAB = 'draft'; renderApp(); return; }
+  const nextG = getUserNextGame();
+  if (nextG && !nextG.played) enterLiveMatch();
+  else advanceWeekOrPhase();
+}
+
+// --- OFFICE TAB 1: HEAD COACH'S OFFICE (MOCKUP 11603) ---
+function renderHeadCoachOffice() {
+  const ut = getUserTeam(), uR = getTeamRatings(ut), nextG = getUserNextGame();
+  const opp = nextG ? getTeam(nextG.home === ut.id ? nextG.away : nextG.home) : null;
+  const divTeams = getStandings(ut.conf).filter(t => t.div === ut.div);
+  const watchPlayers = [...ut.roster].sort((a,b) => b.ovr - a.ovr).slice(0, 4);
+  const allP = STATE.teams.flatMap(t => t.roster.map(p => ({ ...p, teamId: t.id })));
+  const bestOff = [...allP].sort((a,b) => (b.stats.passYds + b.stats.rushYds*2 + b.stats.recYds*2) - (a.stats.passYds + a.stats.rushYds*2 + a.stats.recYds*2))[0];
+  const bestDef = [...allP].sort((a,b) => (b.stats.sacks*4 + b.stats.defInt*5 + b.stats.tackles) - (a.stats.sacks*4 + a.stats.defInt*5 + a.stats.tackles))[0];
+
+  return `
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Next Game Card -->
+      <div class="fm-card overflow-hidden flex flex-col justify-between">
+        <div class="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+          <span class="text-xs font-extrabold text-white">Next game</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 font-bold">● ${STATE.phase === 'REGULAR' ? `Week ${STATE.week}` : STATE.phase}</span>
+        </div>
+        <div class="p-4 bg-gradient-to-b from-[#172844] to-[#151e30]">
+          ${opp ? `
+            <div class="grid grid-cols-3 items-center text-center gap-2 py-1">
+              <div class="flex flex-col items-center">
+                ${renderTeamCrest(ut, 54)}
+                <div class="text-sm font-extrabold text-white mt-2">${ut.city}</div>
+                <div class="text-[11px] text-slate-400">${ut.conf} ${ut.div} / ${ut.w}-${ut.l}</div>
+              </div>
+              <div>
+                <div class="text-lg font-black text-slate-400">VS</div>
+                <div class="text-[10px] font-bold text-sky-400 mt-0.5">${nextG.home === ut.id ? 'HOME' : 'AWAY'}</div>
+              </div>
+              <div class="flex flex-col items-center">
+                ${renderTeamCrest(opp, 54)}
+                <div class="text-sm font-extrabold text-white mt-2">${opp.city}</div>
+                <div class="text-[11px] text-slate-400">${opp.conf} ${opp.div} / ${opp.w}-${opp.l}</div>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
+              <button onclick="OFFICE_TAB='playbook';renderApp();" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-slate-200">Game Plan Report</button>
+              <button onclick="enterLiveMatch()" class="px-4 py-1.5 rounded bg-sky-500 hover:bg-sky-400 text-white text-xs font-extrabold shadow">🏈 매치데이 지휘</button>
+            </div>` : `
+            <div class="py-8 text-center">
+              <div class="text-sm font-bold text-white">${STATE.phase === 'DRAFT' ? '오프시즌 신인 드래프트 진행 중' : '이번 주는 바이 위크 / 경기 완료'}</div>
+              <button onclick="handleContinueBtn()" class="mt-3 px-4 py-2 rounded bg-sky-500 text-white text-xs font-extrabold">다음 일정 진행 →</button>
+            </div>`}
+        </div>
+        <div class="grid grid-cols-4 border-t border-amber-500/40 bg-[#101726] text-center py-2 text-[11px]">
+          <div><div class="text-amber-400 font-bold">Record</div><div class="font-mono-num text-white font-bold">${ut.w}-${ut.l}</div></div>
+          <div><div class="text-amber-400 font-bold">Offense</div><div class="font-mono-num text-white font-bold">${uR.off}</div></div>
+          <div><div class="text-amber-400 font-bold">Defense</div><div class="font-mono-num text-white font-bold">${uR.def}</div></div>
+          <div><div class="text-amber-400 font-bold">Cap room</div><div class="font-mono-num text-emerald-400 font-bold">$${getTeamCapSpace(ut).toFixed(1)}M</div></div>
+        </div>
+      </div>
+
+      <!-- Coaching Staff Report -->
+      <div class="fm-card p-4 flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+          <span class="text-xs font-extrabold text-white">Coaching Staff Report</span>
+          <button onclick="OFFICE_TAB='inbox';renderApp();" class="text-[11px] text-sky-400 hover:underline font-bold">인박스 전체 →</button>
+        </div>
+        <div class="space-y-3 text-xs flex-1 overflow-y-auto max-h-56">
+          <div class="flex gap-2.5">
+            <span class="text-amber-400 mt-0.5">●</span>
+            <div>
+              <div class="font-bold text-white">로스터 컨디션 현황</div>
+              <div class="text-slate-400 mt-0.5">${ut.roster.filter(p=>p.injuredWeeks>0).length ? `부상 결장 ${ut.roster.filter(p=>p.injuredWeeks>0).length}명 발생 중` : '부상자 없음 — 53명 전원 정상 훈련 소화 중'}</div>
+            </div>
+          </div>
+          ${STATE.inbox.slice(0, 3).map(m => `
+            <div onclick="SELECTED_INBOX_ID=${m.id};OFFICE_TAB='inbox';renderApp();" class="flex gap-2.5 cursor-pointer hover:bg-slate-800/50 p-1.5 -mx-1.5 rounded">
+              <span class="text-sky-400 mt-0.5">●</span>
+              <div>
+                <div class="font-bold text-white">${m.title}</div>
+                <div class="text-slate-400 mt-0.5 line-clamp-2">${m.body}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Division Standings -->
+      <div class="fm-card p-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2.5">
+          <span class="text-xs font-extrabold text-white">${ut.conf} ${ut.div}</span>
+          <button onclick="OFFICE_TAB='standings';renderApp();" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200">Full standings</button>
+        </div>
+        <table class="w-full text-xs">
+          <thead><tr class="text-slate-400 border-b border-slate-800"><th class="text-left pb-1.5"># Team</th><th class="text-center pb-1.5">W</th><th class="text-center pb-1.5">L</th><th class="text-right pb-1.5">Diff</th></tr></thead>
+          <tbody>
+            ${divTeams.map((t, i) => `
+              <tr class="border-b border-slate-800/50 ${t.id===ut.id?'bg-sky-500/10 font-bold text-white':'text-slate-300'}">
+                <td class="py-2 flex items-center gap-2"><span class="text-slate-500 font-mono-num">${i+1}</span>${renderTeamCrest(t, 22)}<span>${t.city}</span></td>
+                <td class="text-center font-mono-num">${t.w}</td>
+                <td class="text-center font-mono-num">${t.l}</td>
+                <td class="text-right font-mono-num ${t.pf-t.pa>=0?'text-emerald-400':'text-rose-400'}">${t.pf-t.pa>=0?'+':''}${t.pf-t.pa}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- League Best This Week -->
+      <div class="fm-card p-4">
+        <div class="border-b border-slate-800 pb-2 mb-3 text-xs font-extrabold text-white">League Best This Season</div>
+        ${(bestOff && (bestOff.stats.passYds + bestOff.stats.rushYds + bestOff.stats.recYds) > 0) ? `
+          <div class="space-y-2.5 text-xs">
+            <div class="p-3 rounded-lg bg-slate-900/70 border border-slate-800 flex items-center justify-between">
+              <div><div class="text-[10px] text-amber-400 font-bold">OFFENSIVE MVP PACE</div><div class="font-extrabold text-white text-sm mt-0.5">${bestOff.name} (${bestOff.pos} · ${bestOff.teamId})</div></div>
+              <div class="font-mono-num text-right text-sky-400 font-bold">${bestOff.stats.passYds || bestOff.stats.rushYds || bestOff.stats.recYds} yds</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/70 border border-slate-800 flex items-center justify-between">
+              <div><div class="text-[10px] text-emerald-400 font-bold">DEFENSIVE MVP PACE</div><div class="font-extrabold text-white text-sm mt-0.5">${bestDef.name} (${bestDef.pos} · ${bestDef.teamId})</div></div>
+              <div class="font-mono-num text-right text-emerald-400 font-bold">${bestDef.stats.sacks} SCK · ${bestDef.stats.defInt} INT</div>
+            </div>
+          </div>` : `<p class="text-xs text-slate-400 py-8 text-center">이번 주 경기가 완료되면 각 컨퍼런스 최고 공격/수비 선수가 표시됩니다.</p>`}
+      </div>
+
+      <!-- Players to Watch -->
+      <div class="fm-card p-4">
+        <div class="border-b border-slate-800 pb-2 mb-2.5 text-xs font-extrabold text-white">Players to Watch</div>
+        <table class="w-full text-xs">
+          <thead><tr class="text-slate-400 border-b border-slate-800"><th class="text-left pb-1.5">Player</th><th class="text-center pb-1.5">POS</th><th class="text-center pb-1.5">Rating</th><th class="text-right pb-1.5">Trait</th></tr></thead>
+          <tbody>
+            ${watchPlayers.map(p => `
+              <tr onclick="openPlayerModal(${p.id})" class="border-b border-slate-800/50 hover:bg-slate-800/60 cursor-pointer">
+                <td class="py-2"><div class="font-bold text-white">${p.name}</div><div class="text-[10px] text-slate-500 font-mono-num">#${p.jersey} · OVR ${p.ovr}</div></td>
+                <td class="text-center"><span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-200 font-bold text-[10px]">${p.pos}</span></td>
+                <td class="text-center text-[11px]">${renderStars(clamp((p.ovr - 55)/8.5, 2, 5))}</td>
+                <td class="text-right"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold">${p.trait}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Training Focus (Mockup 11603 bottom-right) -->
+      <div class="fm-card p-4">
+        <div class="border-b border-slate-800 pb-2 mb-3 text-xs font-extrabold text-white">Training Focus</div>
+        <div class="flex border-b border-slate-800 mb-3 text-xs font-bold">
+          <button onclick="getUserTeam().trainingMode='coach';renderApp();" class="px-3 py-1.5 ${ut.trainingMode==='coach'?'text-white border-b-2 border-amber-400':'text-slate-400'}">Coach decides</button>
+          <button onclick="getUserTeam().trainingMode='manual';renderApp();" class="px-3 py-1.5 ${ut.trainingMode==='manual'?'text-white border-b-2 border-amber-400':'text-slate-400'}">Set manually</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Offense</label>
+            <select ${ut.trainingMode==='coach'?'disabled':''} onchange="getUserTeam().trainOff=this.value;showToast('공격 훈련 테마 변경','success');" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white disabled:opacity-50">
+              ${['Blocking','Passing','Route Running','Red Zone'].map(v=>`<option ${ut.trainOff===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Defense</label>
+            <select ${ut.trainingMode==='coach'?'disabled':''} onchange="getUserTeam().trainDef=this.value;showToast('수비 훈련 테마 변경','success');" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white disabled:opacity-50">
+              ${['Pass Rush','Zone Coverage','Tackling','Blitz Package'].map(v=>`<option ${ut.trainDef===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Special Teams</label>
+            <select ${ut.trainingMode==='coach'?'disabled':''} onchange="getUserTeam().trainST=this.value;showToast('스페셜팀 훈련 변경','success');" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white disabled:opacity-50">
+              ${['Kick Accuracy','Punt Placement','Return Coverage'].map(v=>`<option ${ut.trainST===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// --- OFFICE TAB 2: INBOX SPLIT-PANE (MOCKUP 11605) ---
+function renderInboxView() {
+  const cats = ['ALL','Team News','Coach Reports','Injuries','Scouts','Club'];
+  const list = STATE.inbox.filter(m => INBOX_CAT === 'ALL' || m.cat === INBOX_CAT);
+  const selected = list.find(m => m.id === SELECTED_INBOX_ID) || list[0] || null;
+  if (selected) selected.read = true;
+  return `
+    <div class="fm-card overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap gap-1.5">
+          ${cats.map(c => {
+            const cnt = STATE.inbox.filter(m => (c==='ALL'||m.cat===c) && !m.read).length;
+            return `<button onclick="INBOX_CAT='${c}';renderApp();" class="px-3 py-1 rounded text-xs font-bold ${INBOX_CAT===c?'bg-sky-500/20 text-white border-b-2 border-sky-400':'text-slate-400 hover:text-white'}">${c} ${cnt?`<span class="ml-1 px-1.5 rounded-full bg-rose-500 text-white text-[10px]">${cnt}</span>`:''}</button>`;
+          }).join('')}
+        </div>
+        <button onclick="STATE.inbox.forEach(m=>m.read=true);renderApp();" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">Mark all read</button>
+      </div>
+      <div class="divide-y divide-slate-800 max-h-56 overflow-y-auto">
+        ${list.map(m => `
+          <div onclick="SELECTED_INBOX_ID=${m.id};renderApp();" class="px-4 py-2.5 cursor-pointer flex items-center justify-between transition ${selected && selected.id===m.id ? 'bg-[#12456b]' : 'hover:bg-slate-800/60'}">
+            <div>
+              <div class="text-[10px] font-bold text-sky-300">${m.cat}</div>
+              <div class="text-xs font-extrabold text-white">${m.title}</div>
+              <div class="text-[11px] text-amber-300/90">${m.sender}</div>
+            </div>
+            <span class="text-[11px] text-slate-400 font-mono-num">${m.date}</span>
+          </div>`).join('')}
+      </div>
+      ${selected ? `
+        <div class="p-5 bg-[#101829] border-t border-slate-700 space-y-3">
+          <div class="text-xs text-slate-400">${selected.cat} / ${selected.sender} · ${selected.date}</div>
+          <h3 class="text-lg font-extrabold text-white">${selected.title}</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">${selected.body}</p>
+          <div class="pt-2 flex flex-wrap gap-2">
+            <button onclick="OFFICE_TAB='playbook';renderApp();" class="px-4 py-2 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold">플레이북 / 전술 점검</button>
+            <button onclick="OFFICE_TAB='scouting';renderApp();" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-bold">스카우팅 보드 열기</button>
+          </div>
+        </div>` : '<div class="p-8 text-center text-xs text-slate-500">메시지가 없습니다.</div>'}
+    </div>`;
+}
+
+// --- OFFICE TAB 3: ROSTER ---
+function renderRosterView() {
+  const ut = getUserTeam();
+  const positions = ['ALL','QB','RB','WR','TE','OL','DL','LB','CB','S','K','P'];
+  const filtered = ut.roster.filter(p => ROSTER_FILTER === 'ALL' || p.pos === ROSTER_FILTER);
+  return `
+    <div class="fm-card p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="text-sm font-extrabold text-white">53-Man Roster (${ut.roster.length}명)</div>
+        <div class="flex flex-wrap gap-1">
+          ${positions.map(pos => `<button onclick="ROSTER_FILTER='${pos}';renderApp();" class="px-2.5 py-1 rounded text-xs font-bold ${ROSTER_FILTER===pos?'bg-amber-500 text-slate-950':'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${pos}</button>`).join('')}
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2 px-2">POS</th><th class="py-2 px-2">선수명</th><th class="hidden sm:table-cell py-2 px-2 text-center">나이</th><th class="py-2 px-2 text-center">OVR</th><th class="hidden sm:table-cell py-2 px-2 text-center">POT</th><th class="hidden md:table-cell py-2 px-2">특성</th><th class="py-2 px-2 text-right">연봉</th><th class="py-2 px-2 text-center">상태</th><th class="py-2 px-2 text-right">시즌 기록</th></tr></thead>
+          <tbody>
+            ${filtered.map(p => {
+              const st = p.pos==='QB'?`${p.stats.passYds}yd ${p.stats.passTD}TD/${p.stats.ints}INT`:p.pos==='RB'?`${p.stats.rushYds}yd ${p.stats.rushTD}TD`:(p.pos==='WR'||p.pos==='TE')?`${p.stats.rec}rec ${p.stats.recYds}yd`:`${p.stats.tackles}TCK ${p.stats.sacks}SCK`;
+              return `<tr onclick="openPlayerModal(${p.id})" class="border-b border-slate-800/60 hover:bg-slate-800/60 cursor-pointer">
+                <td class="py-2 px-2 font-mono-num font-bold text-sky-300">${p.pos}</td>
+                <td class="py-2 px-2 font-bold text-white"><span class="text-slate-500 font-mono-num mr-1">#${p.jersey}</span>${p.name}</td>
+                <td class="hidden sm:table-cell py-2 px-2 text-center font-mono-num">${p.age}</td>
+                <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 rounded font-mono-num font-black ${ovrClass(p.ovr)}">${p.ovr}</span></td>
+                <td class="hidden sm:table-cell py-2 px-2 text-center font-mono-num text-slate-300">${p.pot}</td>
+                <td class="hidden md:table-cell py-2 px-2 text-[11px] text-slate-400">${p.trait}</td>
+                <td class="py-2 px-2 text-right font-mono-num text-emerald-400">$${p.salary.toFixed(1)}M (${p.years}y)</td>
+                <td class="py-2 px-2 text-center">${p.injuredWeeks>0?`<span class="text-rose-400 font-bold">🏥 ${p.injuredWeeks}주</span>`:'<span class="text-emerald-400">정상</span>'}</td>
+                <td class="py-2 px-2 text-right font-mono-num text-slate-400">${st}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// --- OFFICE TAB 4: PLAYBOOK & TACTICS (MADDEN PLAY ART) ---
+function renderPlaybookView() {
+  const ut = getUserTeam();
+  return `
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="fm-card p-4">
+        <div class="text-xs font-extrabold text-sky-400 mb-2.5">⚔️ 공격 오펜스 시스템</div>
+        <div class="grid grid-cols-2 gap-2">
+          ${Object.entries(OFF_SCHEMES).map(([k,v]) => `
+            <button onclick="getUserTeam().offScheme='${k}';showToast('공격 전술 변경: ${k}','success');renderApp();" class="text-left p-3 rounded-lg border ${ut.offScheme===k?'bg-sky-500/15 border-sky-400':'bg-slate-900/70 border-slate-800'}">
+              <div class="text-xs font-extrabold text-white">${v.label}</div>
+              <div class="text-[10px] text-slate-400 mt-1">${v.desc}</div>
+            </button>`).join('')}
+        </div>
+      </div>
+      <div class="fm-card p-4">
+        <div class="text-xs font-extrabold text-emerald-400 mb-2.5">🛡️ 수비 디펜스 시스템</div>
+        <div class="grid grid-cols-2 gap-2">
+          ${Object.entries(DEF_SCHEMES).map(([k,v]) => `
+            <button onclick="getUserTeam().defScheme='${k}';showToast('수비 전술 변경: ${k}','success');renderApp();" class="text-left p-3 rounded-lg border ${ut.defScheme===k?'bg-emerald-500/15 border-emerald-400':'bg-slate-900/70 border-slate-800'}">
+              <div class="text-xs font-extrabold text-white">${v.label}</div>
+              <div class="text-[10px] text-slate-400 mt-1">${v.desc}</div>
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="fm-card p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <div class="text-sm font-extrabold text-white">📖 매든 스타일 플레이북 도감 (Play Art)</div>
+          <div class="text-xs text-slate-400">경기 중 우측 플레이콜 패널에서 동일한 도감 카드를 선택하고 Flip(좌우 반전)할 수 있습니다.</div>
+        </div>
+        <div class="flex gap-1.5">
+          <button onclick="PLAYBOOK_SIDE='off';renderApp();" class="px-3 py-1.5 rounded text-xs font-extrabold ${PLAYBOOK_SIDE==='off'?'bg-sky-500 text-white':'bg-slate-800 text-slate-300'}">공격 (15)</button>
+          <button onclick="PLAYBOOK_SIDE='def';renderApp();" class="px-3 py-1.5 rounded text-xs font-extrabold ${PLAYBOOK_SIDE==='def'?'bg-emerald-500 text-slate-950':'bg-slate-800 text-slate-300'}">수비 (9)</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        ${(PLAYBOOK_SIDE==='off'?OFF_PLAYS:DEF_PLAYS).map(p => `
+          <div class="play-card p-2.5 flex flex-col gap-1.5">
+            <div class="rounded overflow-hidden border border-slate-800">${renderPlayArtSVG(PLAYBOOK_SIDE, p.art, false)}</div>
+            <div class="text-xs font-extrabold text-white">${p.id}</div>
+            <div class="text-[10px] text-slate-400">${p.sub}</div>
+            <div class="text-[10px] text-amber-400 font-semibold">${p.ko}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// --- OFFICE TAB 5..9: TRAINING / SCHEDULE / SCOUTING / STANDINGS / FRONT OFFICE ---
+function renderTrainingView() {
+  const ut = getUserTeam();
+  return `<div class="fm-card p-5 space-y-4">
+    <h3 class="text-sm font-extrabold text-white">🏋️ 주간 훈련 및 게임플랜 관리</h3>
+    <p class="text-xs text-slate-400">선택한 훈련 테마와 게임 템포는 매 경기 시뮬레이션 보정과 오프시즌 선수 성장에 반영됩니다.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+      <div><label class="block text-slate-400 mb-1">패스 비율 (${ut.passRatio}%)</label><input type="range" min="30" max="80" value="${ut.passRatio}" oninput="getUserTeam().passRatio=Number(this.value);renderApp();" class="w-full accent-sky-400"/></div>
+      <div><label class="block text-slate-400 mb-1">경기 템포</label><select onchange="getUserTeam().tempo=this.value;" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white"><option value="Chew Clock" ${ut.tempo==='Chew Clock'?'selected':''}>Chew Clock (시간 끌기)</option><option value="Balanced" ${ut.tempo==='Balanced'?'selected':''}>Balanced</option><option value="Hurry-Up" ${ut.tempo==='Hurry-Up'?'selected':''}>Hurry-Up (노허들)</option></select></div>
+      <div><label class="block text-slate-400 mb-1">4th Down 성향</label><select onchange="getUserTeam().fourthDown=this.value;" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white"><option value="Conservative" ${ut.fourthDown==='Conservative'?'selected':''}>Conservative</option><option value="Balanced" ${ut.fourthDown==='Balanced'?'selected':''}>Balanced</option><option value="Analytics" ${ut.fourthDown==='Analytics'?'selected':''}>Analytics (공격적)</option></select></div>
+    </div>
+  </div>`;
+}
+
+function renderScheduleView() {
+  const ut = getUserTeam();
+  const rows = STATE.schedule.map((wk, idx) => {
+    const g = wk.find(x => x.home === ut.id || x.away === ut.id);
+    if (!g) return `<tr class="border-b border-slate-800/50 text-slate-500"><td class="py-2 px-2 font-mono-num">W${idx+1}</td><td colspan="3" class="py-2 px-2">BYE WEEK (휴식)</td></tr>`;
+    const isH = g.home === ut.id, opp = getTeam(isH ? g.away : g.home);
+    const uS = isH ? g.homeScore : g.awayScore, oS = isH ? g.awayScore : g.homeScore;
+    const res = !g.played ? '<span class="text-slate-500">예정</span>' : uS > oS ? `<span class="text-emerald-400 font-bold">W ${uS}-${oS}</span>` : uS < oS ? `<span class="text-rose-400 font-bold">L ${uS}-${oS}</span>` : `<span class="text-amber-400">T ${uS}-${oS}</span>`;
+    return `<tr class="border-b border-slate-800/50 ${idx+1===STATE.week?'bg-sky-500/10':''}">
+      <td class="py-2 px-2 font-mono-num font-bold text-slate-300">W${idx+1}</td>
+      <td class="py-2 px-2 text-xs text-slate-400">${isH ? 'vs' : '@'}</td>
+      <td class="py-2 px-2 flex items-center gap-2 font-bold text-white">${renderTeamCrest(opp, 20)} ${opp.city} ${opp.name}</td>
+      <td class="py-2 px-2 text-right font-mono-num">${res}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="fm-card p-4"><h3 class="text-sm font-extrabold text-white mb-3">📅 ${STATE.season} 정규시즌 18주 일정</h3><table class="w-full text-xs">${rows}</table></div>`;
+}
+
+function renderScoutingView() {
+  return `<div class="fm-card p-4">
+    <h3 class="text-sm font-extrabold text-white mb-3">🔍 ${STATE.season} 드래프트 유망주 스카우팅 보드 (Top 30)</h3>
+    <div class="overflow-x-auto"><table class="w-full text-xs">
+      <thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2 px-2">#</th><th class="py-2 px-2">POS</th><th class="py-2 px-2">선수명</th><th class="py-2 px-2 text-center">나이</th><th class="py-2 px-2 text-center">예상 OVR</th><th class="py-2 px-2 text-center">POT</th><th class="py-2 px-2">스카우트 평가</th></tr></thead>
+      <tbody>${STATE.draftClass.slice(0, 30).map((r, i) => `<tr class="border-b border-slate-800/50"><td class="py-2 px-2 font-mono-num text-slate-400">${i+1}</td><td class="py-2 px-2 font-mono-num font-bold text-sky-300">${r.pos}</td><td class="py-2 px-2 font-bold text-white">${r.name}</td><td class="py-2 px-2 text-center font-mono-num">${r.age}</td><td class="py-2 px-2 text-center"><span class="px-2 py-0.5 rounded font-mono-num font-black ${ovrClass(r.ovr)}">${r.ovr}</span></td><td class="py-2 px-2 text-center font-mono-num text-amber-300">${r.pot}</td><td class="py-2 px-2 text-slate-300">${r.scoutGrade}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderStandingsView() {
+  const mk = (conf) => `<div class="fm-card p-4"><h3 class="text-sm font-extrabold ${conf==='AFC'?'text-rose-400':'text-sky-400'} mb-3">${conf} Conference</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${['East','North','South','West'].map(d => `<div class="bg-slate-900/70 p-2.5 rounded border border-slate-800"><div class="text-[11px] font-bold text-slate-400 mb-1.5">${conf} ${d}</div><table class="w-full text-xs">${getStandings(conf).filter(t=>t.div===d).map(t=>`<tr class="border-t border-slate-800/50 ${t.id===STATE.userTeamId?'text-amber-300 font-bold':'text-slate-300'}"><td class="py-1 flex items-center gap-1.5">${renderTeamCrest(t,18)}${t.city}</td><td class="text-right font-mono-num">${t.w}-${t.l}</td></tr>`).join('')}</table></div>`).join('')}</div></div>`;
+  return `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">${mk('AFC')}${mk('NFC')}</div>`;
+}
+
+
+function renderStaffView() {
+  const ut = getUserTeam();
+  if (!ut.staff) ut.staff = { OC: generateStaffMember('OC'), DC: generateStaffMember('DC'), SCOUT: generateStaffMember('SCOUT'), TRAINER: generateStaffMember('TRAINER') };
+  const roleLabels = { OC: '공격 코디네이터 (OC)', DC: '수비 코디네이터 (DC)', SCOUT: '수석 스카우트', TRAINER: '수석 트레이너' };
+  const curCards = Object.entries(ut.staff).map(([r, s]) => `
+    <div class="bg-slate-900/80 p-3.5 rounded-lg border border-slate-800 flex items-center justify-between">
+      <div>
+        <div class="text-[10px] font-bold text-sky-400">${roleLabels[r]}</div>
+        <div class="text-sm font-extrabold text-white mt-0.5">${s.name}</div>
+        <div class="text-[11px] text-slate-400">${s.spec} · 전력 보정 <strong class="text-emerald-400">+${s.bonus}</strong></div>
+      </div>
+      <div class="text-xs">${renderStars(s.stars)}</div>
+    </div>`).join('');
+
+  const market = (STATE.staffMarket || []).map(s => `
+    <tr class="border-b border-slate-800/50">
+      <td class="py-2 font-bold text-sky-300">${s.role}</td>
+      <td class="font-bold text-white">${s.name}</td>
+      <td class="text-slate-400">${s.spec}</td>
+      <td class="text-center text-xs">${renderStars(s.stars)}</td>
+      <td class="text-right"><button onclick="hireStaff(${s.id})" class="px-3 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs">선임</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="fm-card p-4 space-y-3">
+      <h3 class="text-sm font-extrabold text-white">🧢 현재 코칭 스태프 (전력·훈련·회복 실시간 반영)</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${curCards}</div>
+    </div>
+    <div class="fm-card p-4">
+      <h3 class="text-sm font-extrabold text-white mb-2.5">📋 영입 가능한 코치 / 스카우트 시장</h3>
+      <table class="w-full text-xs"><thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2">직책</th><th>이름</th><th>전문 분야</th><th class="text-center">등급</th><th class="text-right">선임</th></tr></thead><tbody>${market}</tbody></table>
+    </div>`;
+}
+
+function hireStaff(sid) {
+  const idx = (STATE.staffMarket || []).findIndex(s => s.id === sid);
+  if (idx < 0) return;
+  const s = STATE.staffMarket.splice(idx, 1)[0];
+  const ut = getUserTeam();
+  if (ut.staff && ut.staff[s.role]) STATE.staffMarket.push(ut.staff[s.role]);
+  ut.staff[s.role] = s;
+  showToast(`${s.name} 코치를 ${s.role}로 선임했습니다!`, 'success');
+  renderApp();
+}
+
+function renderHistoryView() {
+  const awards = (STATE.awardsHistory || []).map(a => `
+    <tr class="border-b border-slate-800/50">
+      <td class="py-2 font-mono-num font-bold text-amber-400">${a.season}</td>
+      <td class="font-bold text-white">${a.champ}</td>
+      <td class="text-sky-300">${a.mvp}</td>
+      <td class="text-emerald-300">${a.opoy}</td>
+      <td class="text-rose-300">${a.dpoy}</td>
+    </tr>`).join('');
+  const hof = (STATE.hallOfFame || []).map(h => `
+    <div class="p-3 rounded-lg bg-slate-900/80 border border-amber-500/30 flex items-center justify-between text-xs">
+      <div>
+        <div class="font-extrabold text-amber-300">🏅 ${h.name} <span class="text-slate-400">(${h.pos} · ${h.team})</span></div>
+        <div class="text-[11px] text-slate-400 mt-0.5">${h.retiredSeason} 시즌 은퇴 (${h.age}세) · 전성기 OVR ${h.peakOvr}</div>
+      </div>
+      <div class="font-mono-num text-right text-slate-300">${h.passYds ? h.passYds+'pYd' : h.rushYds ? h.rushYds+'rYd' : h.recYds ? h.recYds+'recYd' : h.sacks+' SCK'}</div>
+    </div>`).join('');
+
+  return `
+    <div class="fm-card p-4">
+      <h3 class="text-sm font-extrabold text-white mb-3">🏆 역대 시즌 챔피언 & MVP 어워드</h3>
+      ${awards ? `<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2">시즌</th><th>그리드아이언 볼 우승</th><th>MVP</th><th>OPOY</th><th>DPOY</th></tr></thead><tbody>${awards}</tbody></table></div>` : '<p class="text-xs text-slate-400 py-4">첫 시즌 정규리그가 끝나면 역대 수상 및 우승 기록이 자동 누적됩니다.</p>'}
+    </div>
+    <div class="fm-card p-4">
+      <h3 class="text-sm font-extrabold text-amber-400 mb-3">🏛️ 명예의 전당 (Hall of Fame · 은퇴 레전드)</h3>
+      ${hof ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">${hof}</div>` : '<p class="text-xs text-slate-400 py-4">시즌이 지나며 은퇴하는 전성기 OVR 86+ 레전드 선수들이 명예의 전당에 헌액됩니다.</p>'}
+    </div>`;
+}
+
+function renderFrontOfficeView() {
+  const ut = getUserTeam();
+  const tabs = `<div class="flex flex-wrap gap-1.5 mb-3">
+    ${[['cap','💰 샐러리캡'],['fa',`📝 FA 시장 (${STATE.freeAgents.length})`],['trade','🔄 트레이드'],['draft','🎓 7라운드 드래프트']].map(([id,lbl])=>`<button onclick="GM_SUBTAB='${id}';renderApp();" class="px-3.5 py-1.5 rounded text-xs font-extrabold ${GM_SUBTAB===id?'bg-sky-500 text-white':'bg-slate-800 text-slate-300'}">${lbl}</button>`).join('')}
+  </div>`;
+
+  if (GM_SUBTAB === 'cap') {
+    const pay = Math.round(ut.roster.reduce((s,p)=>s+p.salary,0)*10)/10, cs = getTeamCapSpace(ut);
+    return tabs + `<div class="fm-card p-4 space-y-4">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div class="bg-slate-900 p-3 rounded"><div class="text-xs text-slate-400">Salary Cap</div><div class="text-xl font-black font-mono-num text-white">$${getSalaryCap().toFixed(1)}M</div></div>
+        <div class="bg-slate-900 p-3 rounded"><div class="text-xs text-slate-400">Active Payroll</div><div class="text-xl font-black font-mono-num text-sky-400">$${pay}M</div></div>
+        <div class="bg-slate-900 p-3 rounded"><div class="text-xs text-slate-400">Dead Cap</div><div class="text-xl font-black font-mono-num text-rose-400">$${ut.deadCap.toFixed(1)}M</div></div>
+        <div class="bg-slate-900 p-3 rounded"><div class="text-xs text-slate-400">Cap Space</div><div class="text-xl font-black font-mono-num text-emerald-400">$${cs.toFixed(1)}M</div></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${[...ut.roster].sort((a,b)=>b.salary-a.salary).slice(0,10).map(p=>`<div onclick="openPlayerModal(${p.id})" class="p-2.5 rounded bg-slate-900/80 border border-slate-800 hover:border-sky-400 cursor-pointer flex justify-between text-xs"><span><strong class="text-sky-400 mr-1">${p.pos}</strong>${p.name}</span><span class="font-mono-num text-emerald-400 font-bold">$${p.salary}M / ${p.years}y</span></div>`).join('')}</div>
+    </div>`;
+  }
+  if (GM_SUBTAB === 'fa') {
+    return tabs + `<div class="fm-card p-4"><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2">POS</th><th>선수명</th><th class="text-center">OVR</th><th class="text-right">요구 연봉</th><th class="text-right">영입</th></tr></thead><tbody>${STATE.freeAgents.slice(0,25).map(p=>`<tr class="border-b border-slate-800/50"><td class="py-2 font-mono-num text-sky-300 font-bold">${p.pos}</td><td class="font-bold text-white">${p.name}</td><td class="text-center"><span class="px-2 py-0.5 rounded font-mono-num font-black ${ovrClass(p.ovr)}">${p.ovr}</span></td><td class="text-right font-mono-num text-amber-300">$${p.salary}M/${p.years}y</td><td class="text-right"><button onclick="signFA(${p.id})" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold">영입</button></td></tr>`).join('')}</tbody></table></div></div>`;
+  }
+  if (GM_SUBTAB === 'trade') {
+    const partner = getTeam(TRADE_PARTNER_ID);
+    const val = (arr, t) => arr.reduce((s,a) => a.type==='pick' ? s + Math.round(1100/Math.pow((t.picks.find(x=>x.id===a.id)?.round||7),1.35)) : s + Math.round(Math.pow(Math.max(1,(t.roster.find(x=>x.id===a.id)?.ovr||60)-58),1.85)), 0);
+    const uV = val(TRADE_USER_ASSETS, ut), aV = val(TRADE_AI_ASSETS, partner), ok = uV > 0 && aV > 0 && uV >= aV * 0.92;
+    return tabs + `<div class="fm-card p-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <select onchange="TRADE_PARTNER_ID=this.value;TRADE_AI_ASSETS=[];renderApp();" class="bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white font-bold">${STATE.teams.filter(t=>t.id!==ut.id).map(t=>`<option value="${t.id}" ${t.id===partner.id?'selected':''}>${t.city} ${t.name}</option>`).join('')}</select>
+        <div class="flex items-center gap-3 text-xs"><span class="font-mono-num">내 제안 <strong>${uV}</strong> vs 상대 <strong>${aV}</strong></span><button onclick="executeTrade()" ${ok?'':'disabled'} class="px-4 py-1.5 rounded font-extrabold ${ok?'bg-emerald-500 text-slate-950':'bg-slate-700 text-slate-400'}">${ok?'✅ 트레이드 성사':'⚖️ 가치 부족'}</button></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <div class="bg-slate-900/70 p-3 rounded border border-slate-800"><div class="font-bold text-sky-400 mb-2">${ut.name} 자산</div><div class="flex flex-wrap gap-1 mb-2">${ut.picks.map(pk=>`<button onclick="toggleTradeAsset('user','pick','${pk.id}')" class="px-2 py-0.5 rounded text-[10px] font-bold ${TRADE_USER_ASSETS.some(a=>a.id===pk.id)?'bg-sky-500 text-slate-950':'bg-slate-800 text-slate-300'}">R${pk.round}</button>`).join('')}</div><div class="max-h-48 overflow-y-auto space-y-1">${ut.roster.slice(0,25).map(p=>`<div onclick="toggleTradeAsset('user','player',${p.id})" class="px-2 py-1 rounded cursor-pointer flex justify-between ${TRADE_USER_ASSETS.some(a=>a.id===p.id)?'bg-sky-500/25 border border-sky-400':'bg-slate-800/50'}"><span>${p.pos} ${p.name}</span><span class="font-mono-num">OVR ${p.ovr}</span></div>`).join('')}</div></div>
+        <div class="bg-slate-900/70 p-3 rounded border border-slate-800"><div class="font-bold text-amber-400 mb-2">${partner.name} 자산</div><div class="flex flex-wrap gap-1 mb-2">${partner.picks.map(pk=>`<button onclick="toggleTradeAsset('ai','pick','${pk.id}')" class="px-2 py-0.5 rounded text-[10px] font-bold ${TRADE_AI_ASSETS.some(a=>a.id===pk.id)?'bg-amber-500 text-slate-950':'bg-slate-800 text-slate-300'}">R${pk.round}</button>`).join('')}</div><div class="max-h-48 overflow-y-auto space-y-1">${partner.roster.slice(0,25).map(p=>`<div onclick="toggleTradeAsset('ai','player',${p.id})" class="px-2 py-1 rounded cursor-pointer flex justify-between ${TRADE_AI_ASSETS.some(a=>a.id===p.id)?'bg-amber-500/25 border border-amber-400':'bg-slate-800/50'}"><span>${p.pos} ${p.name}</span><span class="font-mono-num">OVR ${p.ovr}</span></div>`).join('')}</div></div>
+      </div>
+    </div>`;
+  }
+  const cur = STATE.phase==='DRAFT' ? STATE.draftOrder[STATE.draftPickIdx] : null;
+  const myTurn = cur && cur.teamId === ut.id;
+  return tabs + `<div class="fm-card p-4 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-2">
+      <div class="text-xs text-slate-300 font-bold">${cur ? `현재 픽: R${cur.round} #${cur.pickNum} (${getTeam(cur.teamId).name})` : '시즌 종료 후 오프시즌 7라운드 드래프트가 개막합니다.'}</div>
+      ${STATE.phase==='DRAFT'?`<div class="flex gap-2"><button onclick="simDraft(false)" class="px-3 py-1 rounded bg-sky-600 text-white text-xs font-bold">⏩ 내 픽까지</button><button onclick="simDraft(true)" class="px-3 py-1 rounded bg-slate-700 text-white text-xs font-bold">⏭️ 전체 자동</button></div>`:''}
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-400 border-b border-slate-700 text-left"><th class="py-2">POS</th><th>유망주</th><th class="text-center">OVR</th><th class="text-center">POT</th><th class="text-right">지명</th></tr></thead><tbody>${STATE.draftClass.slice(0,25).map(r=>`<tr class="border-b border-slate-800/50"><td class="py-2 font-mono-num text-sky-300 font-bold">${r.pos}</td><td class="font-bold text-white">${r.name}</td><td class="text-center"><span class="px-2 py-0.5 rounded font-mono-num font-black ${ovrClass(r.ovr)}">${r.ovr}</span></td><td class="text-center font-mono-num text-amber-300">${r.pot}</td><td class="text-right">${myTurn?`<button onclick="draftPlayer(${r.id})" class="px-3 py-1 rounded bg-emerald-500 text-slate-950 font-extrabold">지명</button>`:'-'}</td></tr>`).join('')}</tbody></table></div>
+  </div>`;
+}
+
+// --- SCREEN C: LIVE MATCHDAY SPLIT-SCREEN (MOCKUP 11607 & 11609) ---
+function enterLiveMatch() {
+  const g = getUserNextGame();
+  if (!g || g.played) { showToast('진행할 경기가 없습니다.', 'info'); return; }
+  if (!LIVE_MATCH || LIVE_MATCH.gameObj !== g) initLiveMatch(g);
+  SCREEN = 'MATCH';
+  renderApp();
+}
+
+function renderMatchScreen() {
+  const m = LIVE_MATCH;
+  const home = getTeam(m.homeId), away = getTeam(m.awayId);
+  const offTeam = m.poss === 0 ? home : away, defTeam = m.poss === 0 ? away : home;
+  const isUserOff = offTeam.id === STATE.userTeamId;
+  const recIds = getRecommendedPlays(m, isUserOff);
+  const allPlays = isUserOff ? OFF_PLAYS : DEF_PLAYS;
+  const filteredPlays = allPlays.filter(p => MATCH_PLAY_CAT === 'ALL' || p.cat === MATCH_PLAY_CAT);
+  const renderTO = (n) => [0,1,2].map(i => `<span class="inline-block w-4 h-1 rounded-sm ${i < n ? 'bg-amber-200' : 'bg-slate-700'}"></span>`).join(' ');
+
+  const catOptions = isUserOff
+    ? [['ALL','All Types (15)'],['RUN','Run'],['SHORT','Short Pass'],['MEDIUM','Medium Pass'],['DEEP','Deep Pass'],['SCREEN','Screen'],['PA','Play Action / RPO'],['SPECIAL','Kick / Special Teams']]
+    : [['ALL','All Types (9)'],['ZONE','Zone Coverage'],['MAN','Man Press'],['RUN','Run Stop'],['BLITZ','Blitz']];
+
+  return `
+    <div class="min-h-screen flex flex-col bg-[#0d1422]">
+      <!-- TOP STADIUM HEADER -->
+      <header class="px-4 py-2 bg-[#131d31] border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-3 text-slate-300">
+          <span class="font-extrabold text-sky-300">${m.stadium}</span>
+          <span class="text-slate-500">|</span>
+          <span>${m.weather}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="simMatchToEnd()" class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white font-bold">Skip to final</button>
+          <button onclick="stopAutoPlay();SCREEN='OFFICE';renderApp();" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-bold">Match menu</button>
+        </div>
+      </header>
+
+      <!-- SPLIT-SCREEN BODY (LEFT: FIELD & CONTROLS, RIGHT: PLAY CALLER) -->
+      <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 max-w-[1600px] w-full mx-auto">
+        <!-- LEFT 8 COLS: SCOREBOARD + 2D FIELD + CONTROLS -->
+        <div class="lg:col-span-8 flex flex-col gap-2.5">
+          <!-- Broadcast Scoreboard -->
+          <div class="fm-card overflow-hidden">
+            <div class="bg-gradient-to-r from-[#0e345c] via-[#122642] to-[#0e345c] px-4 py-3 grid grid-cols-3 items-center">
+              <div class="flex items-center gap-2.5">
+                ${renderTeamCrest(home, 38)}
+                <span class="text-xs sm:text-sm font-extrabold text-white truncate">${home.city}</span>
+                <span class="ml-auto text-2xl sm:text-3xl font-black font-mono-num text-white">${m.score[0]}</span>
+              </div>
+              <div class="text-center">
+                <div class="text-[11px] font-bold text-amber-400">${m.finished ? 'FINAL' : (m.qtr <= 4 ? 'Q'+m.qtr : 'OT')}</div>
+                <div class="text-xl sm:text-2xl font-black font-mono-num text-white leading-none">${fmtClock(m.clock)}</div>
+                <div class="text-[10px] font-mono-num text-slate-400 mt-0.5">:${m.playClock}</div>
+              </div>
+              <div class="flex items-center gap-2.5 flex-row-reverse">
+                ${renderTeamCrest(away, 38)}
+                <span class="text-xs sm:text-sm font-extrabold text-white truncate">${away.city}</span>
+                <span class="mr-auto text-2xl sm:text-3xl font-black font-mono-num text-white">${m.score[1]}</span>
+              </div>
+            </div>
+            <!-- TO & Down Strip -->
+            <div class="bg-[#0e1726] px-4 py-1.5 flex items-center justify-between text-xs border-t border-slate-800">
+              <div class="flex items-center gap-1.5"><span class="text-[10px] text-slate-400 font-bold">TO</span>${renderTO(m.timeouts[0])}</div>
+              <div class="font-extrabold text-amber-300 font-mono-num">${m.finished ? 'GAME OVER' : `${ordinal(m.down)} & ${m.yardLine + m.dist >= 100 ? 'Goal' : m.dist} · ${fmtYardLine(m.yardLine, offTeam.id, defTeam.id)}`}</div>
+              <div class="flex items-center gap-1.5">${renderTO(m.timeouts[1])}<span class="text-[10px] text-slate-400 font-bold">TO</span></div>
+            </div>
+          </div>
+
+          <!-- Pre-snap Info + 2D Field Canvas -->
+          <div class="fm-card overflow-hidden flex-1 flex flex-col">
+            <div class="px-3 py-1.5 bg-[#0e1f19] border-b border-slate-800 flex items-center justify-between text-[11px]">
+              <span class="text-slate-300 font-semibold">${offTeam.id} Attacking → / ${FIELD_ANIM.t < 1 ? 'LIVE PLAY' : 'PRE-SNAP'} / ${m.weather}</span>
+              <button onclick="callCoordinatorPlay()" class="px-2.5 py-0.5 rounded bg-slate-900/80 hover:bg-slate-800 border border-slate-600 text-white font-bold">Coordinator calls</button>
+            </div>
+            <div class="bg-[#113822] flex-1 flex items-center justify-center relative">
+              <canvas id="field-canvas" class="block w-full"></canvas>
+            </div>
+            <!-- Last Play Result Strip -->
+            <div class="px-4 py-2 bg-[#0d3b3e] text-center text-xs font-extrabold text-white border-t border-teal-800/60">
+              ${m.lastBanner}
+            </div>
+            <!-- Bottom Match Control Bar (Mockup 11607) -->
+            <div class="px-3 py-2 bg-[#11192a] border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div class="flex flex-wrap items-center gap-1.5">
+                ${m.finished ? `
+                  <button onclick="advanceWeekOrPhase()" class="px-5 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">경기 완료 · 사무실 복귀 →</button>`
+                : m.awaitingPAT && isUserOff ? `
+                  <button onclick="executeMatchSnap('PAT1')" class="px-4 py-1.5 rounded bg-emerald-500 text-slate-950 font-extrabold">PAT 1점 킥</button>
+                  <button onclick="executeMatchSnap('PAT2')" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 font-extrabold">2점 컨버전</button>`
+                : `<button onclick="executeMatchSnap()" class="px-6 py-2.5 sm:py-1.5 rounded-lg bg-[#0ea5e9] hover:bg-[#38bdf8] text-white font-extrabold text-sm shadow">🏈 Snap</button>`}
+                <button onclick="MATCH_SHOW_ROUTES=!MATCH_SHOW_ROUTES;drawFieldCanvas();renderApp();" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold">${MATCH_SHOW_ROUTES ? 'Hide routes' : 'Show routes'}</button>
+                <button onclick="useMatchTimeout()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold">Timeout</button>
+                <button onclick="replayFieldAnim()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold">Replay</button>
+                <button onclick="toggleAutoPlay()" class="px-3 py-1.5 rounded border font-bold ${MATCH_AUTO_PLAY ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-200 border-slate-700'}">Auto play ${MATCH_AUTO_PLAY ? 'ON' : 'OFF'}</button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] text-slate-400">Speed</span>
+                <select onchange="FIELD_ANIM.speed=Number(this.value);" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white font-bold">
+                  <option value="1" ${FIELD_ANIM.speed===1?'selected':''}>1x</option>
+                  <option value="2" ${FIELD_ANIM.speed===2?'selected':''}>2x</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compact Live Stats & Play Log -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div class="fm-card p-3 max-h-36 overflow-y-auto space-y-1">
+              ${m.log.slice(0, 8).map(l => `<div class="flex gap-2 text-[11px] text-slate-300"><span class="font-mono-num text-slate-500 shrink-0">Q${l.qtr} ${l.clock}</span><span>${l.text}</span></div>`).join('')}
+            </div>
+            <div class="fm-card p-3 grid grid-cols-3 text-center items-center font-mono-num">
+              <div><div class="text-[10px] text-slate-400 font-sans">${home.id} 총 야드</div><div class="text-base font-black text-white">${m.box[0].passYds+m.box[0].rushYds}</div><div class="text-[10px] text-slate-400">P ${m.box[0].passYds} / R ${m.box[0].rushYds}</div></div>
+              <div class="text-[11px] font-sans text-slate-400">1st Down<br/><strong class="font-mono-num text-amber-400">${m.box[0].firstDowns} - ${m.box[1].firstDowns}</strong></div>
+              <div><div class="text-[10px] text-slate-400 font-sans">${away.id} 총 야드</div><div class="text-base font-black text-white">${m.box[1].passYds+m.box[1].rushYds}</div><div class="text-[10px] text-slate-400">P ${m.box[1].passYds} / R ${m.box[1].rushYds}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT 4 COLS: MADDEN/FM PLAY CALLER PANEL (MOCKUP 11607 & 11609) -->
+        <aside class="lg:col-span-4 fm-card p-3 flex flex-col gap-2.5 lg:max-h-[840px]">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-extrabold text-white">${isUserOff ? 'Offensive play' : 'Defensive play'}</h2>
+            <button onclick="MATCH_FLIP=!MATCH_FLIP;renderApp();" class="px-2.5 py-1 rounded border text-xs font-bold ${MATCH_FLIP ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-800 text-slate-200 border-slate-700'}">Flip ${MATCH_FLIP ? 'ON' : ''}</button>
+          </div>
+          <!-- Coordinator Recommendations -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-semibold text-amber-400">Coordinator pick · ${ordinal(m.down)} & ${m.dist}</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${recIds.map(rid => `<button onclick="selectMatchPlay('${rid}')" class="px-2.5 py-1 rounded text-xs font-bold border ${MATCH_SELECTED_PLAY===rid?'bg-sky-500/25 border-sky-400 text-white':'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'}">${rid}</button>`).join('')}
+            </div>
+          </div>
+          <!-- Category Dropdown (Mockup 11609) -->
+          <select onchange="MATCH_PLAY_CAT=this.value;renderApp();" class="w-full bg-[#0c1424] border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white focus:border-amber-400 outline-none">
+            ${catOptions.map(([v,lbl]) => `<option value="${v}" ${MATCH_PLAY_CAT===v?'selected':''}>${lbl}</option>`).join('')}
+          </select>
+          <!-- 2-Column Visual Play Art Grid -->
+          <div class="grid grid-cols-2 gap-2 overflow-y-auto pr-1 flex-1">
+            ${filteredPlays.map(p => {
+              const isRec = recIds.includes(p.id);
+              const isSel = MATCH_SELECTED_PLAY === p.id;
+              return `
+                <button onclick="selectMatchPlay('${p.id}')" ondblclick="selectMatchPlay('${p.id}');executeMatchSnap();" class="play-card ${isSel?'selected':''} p-2 text-left flex flex-col gap-1.5 relative">
+                  ${isRec ? `<span class="self-start px-1.5 py-0.5 rounded bg-amber-300 text-slate-950 text-[9px] font-black">Recommended</span>` : ''}
+                  <div class="rounded overflow-hidden">${renderPlayArtSVG(isUserOff ? 'off' : 'def', p.art, MATCH_FLIP)}</div>
+                  <div>
+                    <div class="text-xs font-extrabold text-white truncate">${p.id}</div>
+                    <div class="text-[10px] text-slate-400 truncate">${p.sub}</div>
+                  </div>
+                </button>`;
+            }).join('')}
+          </div>
+          <div class="text-[10px] text-slate-500 text-center pt-1 border-t border-slate-800">카드를 클릭해 필드 루트를 미리 보고 <strong>Snap</strong> (또는 더블클릭)으로 실행하세요.</div>
+        </aside>
+      </div>
+    </div>`;
+}
+
+function selectMatchPlay(playId) {
+  MATCH_SELECTED_PLAY = playId;
+  renderApp();
+}
+function executeMatchSnap(overrideCall = null) {
+  if (!LIVE_MATCH || LIVE_MATCH.finished) return;
+  resolvePlay(LIVE_MATCH, overrideCall || MATCH_SELECTED_PLAY, false);
+  renderApp();
+}
+function callCoordinatorPlay() {
+  if (!LIVE_MATCH || LIVE_MATCH.finished) return;
+  const isUserOff = (LIVE_MATCH.poss === 0 ? LIVE_MATCH.homeId : LIVE_MATCH.awayId) === STATE.userTeamId;
+  MATCH_SELECTED_PLAY = getRecommendedPlays(LIVE_MATCH, isUserOff)[0];
+  executeMatchSnap(MATCH_SELECTED_PLAY);
+}
+function useMatchTimeout() {
+  if (!LIVE_MATCH || LIVE_MATCH.finished) return;
+  const uIdx = LIVE_MATCH.homeId === STATE.userTeamId ? 0 : 1;
+  if (LIVE_MATCH.timeouts[uIdx] <= 0) { showToast('남은 타임아웃이 없습니다.', 'error'); return; }
+  LIVE_MATCH.timeouts[uIdx]--; SoundFX.whistle();
+  LIVE_MATCH.lastBanner = `⏸️ ${getUserTeam().name} 타임아웃 (남은 횟수: ${LIVE_MATCH.timeouts[uIdx]})`;
+  renderApp();
+}
+function stopAutoPlay() {
+  MATCH_AUTO_PLAY = false;
+  if (AUTO_PLAY_TIMER) { clearInterval(AUTO_PLAY_TIMER); AUTO_PLAY_TIMER = null; }
+}
+function toggleAutoPlay() {
+  if (MATCH_AUTO_PLAY) { stopAutoPlay(); renderApp(); return; }
+  MATCH_AUTO_PLAY = true; renderApp();
+  AUTO_PLAY_TIMER = setInterval(() => {
+    if (!LIVE_MATCH || LIVE_MATCH.finished || SCREEN !== 'MATCH') { stopAutoPlay(); renderApp(); return; }
+    if (FIELD_ANIM.t >= 1) callCoordinatorPlay();
+  }, 1500);
+}
+function simMatchToEnd() {
+  stopAutoPlay();
+  if (!LIVE_MATCH) return;
+  let guard = 0;
+  while (!LIVE_MATCH.finished && guard < 350) { resolvePlay(LIVE_MATCH, null, false); guard++; }
+  renderApp();
+}
+
+// ============================================================================
+// 9. PLAYER MODAL, FA, TRADE & SETTINGS / JSON IMPORT-EXPORT
+// ============================================================================
+function openPlayerModal(pid) {
+  const ut = getUserTeam(), p = ut.roster.find(x => x.id === pid);
+  if (!p) return;
+  const dc = calcDeadCap(p), ext = Math.round(p.salary * 1.12 * 10) / 10;
+  openModal(`#${p.jersey} ${p.name} (${p.pos})`, `
+    <div class="grid grid-cols-4 gap-2 text-center text-xs">
+      <div class="bg-slate-900 p-2 rounded"><div class="text-slate-400">OVR</div><div class="text-lg font-black text-amber-400">${p.ovr}</div></div>
+      <div class="bg-slate-900 p-2 rounded"><div class="text-slate-400">POT</div><div class="text-lg font-black text-sky-400">${p.pot}</div></div>
+      <div class="bg-slate-900 p-2 rounded"><div class="text-slate-400">연봉</div><div class="text-sm font-black text-emerald-400 mt-1">$${p.salary}M/${p.years}y</div></div>
+      <div class="bg-slate-900 p-2 rounded"><div class="text-slate-400">데드캡</div><div class="text-sm font-black text-rose-400 mt-1">$${dc}M</div></div>
+    </div>
+    ${p.pos === 'QB' ? `<div class="text-xs bg-slate-900/80 p-2.5 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">공식 NFL 패서 레이팅 (Passer Rating)</span><strong class="font-mono-num text-amber-400">${calcPasserRating(p.stats)} / 158.3</strong></div>` : ''}
+    <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+      <button onclick="promotePlayer(${p.id})" class="px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">⬆️ 주전 1순위</button>
+      <button onclick="extendPlayer(${p.id},${ext})" class="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">✍️ 3년 연장 ($${ext}M)</button>
+      ${!p.restructured && p.salary >= 4 ? `<button onclick="restructureContract(${p.id})" class="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">💼 계약 재조정 (캡 +$${(p.salary*0.35).toFixed(1)}M)</button>` : ''}
+      ${p.years === 1 && !ut.franchiseTagUsed ? `<button onclick="applyFranchiseTag(${p.id})" class="px-3 py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold">🏷️ 프랜차이즈 태그</button>` : ''}
+      <button onclick="releasePlayer(${p.id})" class="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">✂️ 방출</button>
+    </div>`);
+}
+function promotePlayer(pid) {
+  const ut = getUserTeam(), i = ut.roster.findIndex(p=>p.id===pid); if (i<0) return;
+  const [p] = ut.roster.splice(i,1); const fi = ut.roster.findIndex(x=>x.pos===p.pos);
+  ut.roster.splice(fi<0?0:fi, 0, p); closeModal(); showToast(`${p.name} 주전 승격!`, 'success'); renderApp();
+}
+function extendPlayer(pid, sal) {
+  const ut = getUserTeam(), p = ut.roster.find(x=>x.id===pid); if (!p) return;
+  if (getTeamCapSpace(ut) < sal - p.salary) { showToast('샐러리캡 부족', 'error'); return; }
+  p.salary = sal; p.years += 3; p.guaranteed = Math.round(sal * 1.5 * 10)/10; closeModal(); showToast(`${p.name} 3년 연장 완료`, 'success'); renderApp();
+}
+function releasePlayer(pid) {
+  const ut = getUserTeam(); if (ut.roster.length <= 35) return;
+  const i = ut.roster.findIndex(p=>p.id===pid); if (i<0) return;
+  const [p] = ut.roster.splice(i,1); ut.deadCap = Math.round((ut.deadCap + calcDeadCap(p))*10)/10;
+  p.guaranteed = 0; p.years = 1; STATE.freeAgents.unshift(p); closeModal(); showToast(`${p.name} 방출 완료`, 'info'); renderApp();
+}
+function restructureContract(pid) {
+  const ut = getUserTeam(), p = ut.roster.find(x => x.id === pid);
+  if (!p || p.restructured || p.salary < 4) return;
+  const save = Math.round(p.salary * 0.35 * 10) / 10;
+  p.salary = Math.round((p.salary - save) * 10) / 10;
+  p.guaranteed = Math.round((p.guaranteed + save * 1.4) * 10) / 10;
+  p.restructured = true;
+  closeModal();
+  showToast(`${p.name} 계약 재조정 완료! 올해 캡 +$${save}M 확보 (향후 데드캡 증가)`, 'success');
+  renderApp();
+}
+function applyFranchiseTag(pid) {
+  const ut = getUserTeam(), p = ut.roster.find(x => x.id === pid);
+  if (!p || ut.franchiseTagUsed || p.years !== 1) return;
+  const tagSal = p.pos === 'QB' ? 38.5 : ['WR','DL','CB','OL'].includes(p.pos) ? 22.0 : 14.5;
+  const diff = tagSal - p.salary;
+  if (getTeamCapSpace(ut) < diff) { showToast('프랜차이즈 태그 적용을 위한 캡 여유가 부족합니다.', 'error'); return; }
+  p.salary = tagSal; p.years = 2; p.guaranteed = tagSal; p.franchiseTagged = true; ut.franchiseTagUsed = true;
+  closeModal();
+  showToast(`🏷️ ${p.name}에게 프랜차이즈 태그 적용 완료 ($${tagSal}M)!`, 'success');
+  renderApp();
+}
+function signFA(pid) {
+  const ut = getUserTeam(), i = STATE.freeAgents.findIndex(p=>p.id===pid); if (i<0) return;
+  const p = STATE.freeAgents[i];
+  if (getTeamCapSpace(ut) < p.salary) { showToast('샐러리캡 부족', 'error'); return; }
+  STATE.freeAgents.splice(i,1); ut.roster.push(p); sortDepthChart(ut); showToast(`${p.name} FA 영입 완료`, 'success'); renderApp();
+}
+function toggleTradeAsset(side, type, id) {
+  const arr = side==='user' ? TRADE_USER_ASSETS : TRADE_AI_ASSETS;
+  const i = arr.findIndex(a=>a.type===type && a.id===id);
+  if (i>=0) arr.splice(i,1); else arr.push({type,id}); renderApp();
+}
+function executeTrade() {
+  const ut = getUserTeam(), partner = getTeam(TRADE_PARTNER_ID);
+  const mv = (arr, f, t) => arr.forEach(a => {
+    if (a.type==='pick') { const i=f.picks.findIndex(x=>x.id===a.id); if(i>=0) t.picks.push(f.picks.splice(i,1)[0]); }
+    else { const i=f.roster.findIndex(x=>x.id===a.id); if(i>=0) t.roster.push(f.roster.splice(i,1)[0]); }
+  });
+  mv(TRADE_USER_ASSETS, ut, partner); mv(TRADE_AI_ASSETS, partner, ut);
+  sortDepthChart(ut); sortDepthChart(partner); TRADE_USER_ASSETS=[]; TRADE_AI_ASSETS=[];
+  showToast('트레이드 성사!', 'success'); renderApp();
+}
+
+
+const SLOT_PREFIX = 'gridiron_manager_26_slot_';
+const MEMORY_SLOTS = {};
+
+function readSlotRaw(slotNum) {
+  try {
+    const ls = localStorage.getItem(SLOT_PREFIX + slotNum);
+    if (ls) return ls;
+  } catch (e) {}
+  return MEMORY_SLOTS[slotNum] || null;
+}
+
+function getSlotMeta(slotNum) {
+  try {
+    const raw = readSlotRaw(slotNum);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj.meta || null;
+  } catch (e) { return null; }
+}
+
+function saveToSlot(slotNum) {
+  if (!STATE) return;
+  const ut = getUserTeam();
+  const now = new Date();
+  const ts = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const payload = {
+    meta: { team: `${ut.city} ${ut.name}`, teamId: ut.id, coach: STATE.coachName, season: STATE.season, week: STATE.week, record: `${ut.w}-${ut.l}`, savedAt: ts },
+    state: STATE
+  };
+  const serialized = JSON.stringify(payload);
+  MEMORY_SLOTS[slotNum] = serialized;
+  let persisted = false;
+  try {
+    localStorage.setItem(SLOT_PREFIX + slotNum, serialized);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+    persisted = true;
+  } catch (e) {}
+  showToast(persisted ? `슬롯 ${slotNum}에 저장 완료! (${ts})` : `슬롯 ${slotNum} 임시 저장 완료 (영구 보관은 파일 다운로드 이용)`, 'success');
+  openSaveLoadModal();
+}
+
+function loadFromSlot(slotNum) {
+  try {
+    const raw = readSlotRaw(slotNum);
+    if (!raw) { showToast('해당 슬롯에 저장된 데이터가 없습니다.', 'error'); return; }
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.state || !obj.state.teams) throw new Error();
+    stopAutoPlay();
+    STATE = obj.state;
+    LIVE_MATCH = null;
+    SCREEN = 'OFFICE';
+    OFFICE_TAB = 'office';
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e) {}
+    closeModal();
+    renderApp();
+    showToast(`슬롯 ${slotNum} 불러오기 완료! (${obj.meta.team} · ${obj.meta.season} W${obj.meta.week})`, 'success');
+  } catch (e) {
+    showToast('저장 파일을 불러오지 못했습니다.', 'error');
+  }
+}
+
+function deleteSlot(slotNum) {
+  delete MEMORY_SLOTS[slotNum];
+  try { localStorage.removeItem(SLOT_PREFIX + slotNum); } catch (e) {}
+  showToast(`슬롯 ${slotNum} 삭제 완료`, 'info');
+  openSaveLoadModal();
+}
+
+function downloadSaveFile() {
+  if (!STATE) return;
+  const ut = getUserTeam();
+  const blob = new Blob([JSON.stringify(STATE)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `GridironManager26_${ut.id}_S${STATE.season}_W${STATE.week}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  showToast('세이브 파일(.json)이 다운로드되었습니다!', 'success');
+}
+
+function triggerLoadSaveFile(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const loadedState = parsed.state || parsed;
+      if (!loadedState || !loadedState.teams || !loadedState.userTeamId) throw new Error();
+      STATE = loadedState;
+      LIVE_MATCH = null;
+      SCREEN = 'OFFICE';
+      OFFICE_TAB = 'office';
+      saveToLocalStorage(true);
+      closeModal();
+      renderApp();
+      showToast('세이브 파일 불러오기 성공!', 'success');
+    } catch (e) {
+      showToast('올바른 Gridiron Manager 세이브 파일이 아닙니다.', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function openSaveLoadModal() {
+  const slotsHtml = [1, 2, 3].map(n => {
+    const m = getSlotMeta(n);
+    return `
+      <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div>
+          <div class="text-xs font-extrabold text-amber-400">저장 슬롯 ${n}</div>
+          ${m ? `<div class="text-sm font-bold text-white mt-0.5">${m.team} (${m.record})</div>
+                 <div class="text-[11px] text-slate-400">감독 ${m.coach} · ${m.season} 시즌 W${m.week} · 저장 ${m.savedAt}</div>`
+              : `<div class="text-xs text-slate-500 mt-0.5">비어 있음</div>`}
+        </div>
+        <div class="flex items-center gap-1.5">
+          ${STATE ? `<button onclick="saveToSlot(${n})" class="px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">저장</button>` : ''}
+          ${m ? `<button onclick="loadFromSlot(${n})" class="px-3 py-2 sm:py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold">로드</button>` : ''}
+          ${m ? `<button onclick="deleteSlot(${n})" class="px-2.5 py-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-xs font-bold">삭제</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  openModal('💾 새 게임 · 저장 · 불러오기', `
+    <div class="space-y-4">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="openNewCareerScreen();" class="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm">🆕 새 게임 시작 (32구단 선택)</button>
+      </div>
+      <div class="space-y-2.5">
+        <div class="text-xs font-bold text-slate-300">브라우저 멀티 슬롯 저장소 (자동 저장 별도 유지)</div>
+        ${slotsHtml}
+      </div>
+      <div class="border-t border-slate-800 pt-3 space-y-2">
+        <div class="text-xs font-bold text-slate-300">기기 백업 파일 (.json 내보내기 / 불러오기)</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="downloadSaveFile()" class="py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sky-300 text-xs font-extrabold">📥 세이브 파일 다운로드</button>
+          <label class="py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-emerald-300 text-xs font-extrabold text-center cursor-pointer">
+            📤 세이브 파일 열기
+            <input type="file" accept=".json,application/json" onchange="triggerLoadSaveFile(this)" class="hidden" />
+          </label>
+        </div>
+      </div>
+    </div>`);
+}
+
+function saveToLocalStorage(silent = false) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); if (!silent) showToast('저장 완료!', 'success'); } catch (e) {}
+}
+function loadFromLocalStorage() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { STATE = JSON.parse(raw); return true; } } catch (e) {}
+  return false;
+}
+function openSettingsModal() {
+  openModal('⚙️ 세이브 · 커스텀 로스터 JSON', `
+    <div class="space-y-4 text-xs">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="saveToLocalStorage(false)" class="px-4 py-2 rounded bg-emerald-600 text-white font-bold">💾 수동 저장</button>
+        <button onclick="exportRosterJSON()" class="px-4 py-2 rounded bg-sky-600 text-white font-bold">📤 로스터 JSON 복사</button>
+        <button onclick="openNewCareerScreen();" class="px-4 py-2 rounded bg-amber-500 text-slate-950 font-extrabold">🆕 새 커리어 (구단 선택)</button>
+      </div>
+      <div>
+        <div class="font-bold text-slate-300 mb-1">📥 커스텀 로스터 JSON 불러오기</div>
+        <textarea id="json-import-box" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded p-2 font-mono-num text-[11px] text-slate-200" placeholder='[{"name":"Custom QB","pos":"QB","ovr":95,"age":25,"salary":45.0,"years":4}]'></textarea>
+        <button onclick="importRosterJSON()" class="mt-2 px-4 py-1.5 rounded bg-sky-500 text-white font-bold">적용</button>
+      </div>
+    </div>`);
+}
+function exportRosterJSON() {
+  const data = JSON.stringify(getUserTeam().roster.map(p=>({name:p.name,pos:p.pos,age:p.age,ovr:p.ovr,pot:p.pot,salary:p.salary,years:p.years})), null, 2);
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(data).then(()=>showToast('JSON 복사 완료','success')).catch(()=>{});
+}
+function importRosterJSON() {
+  try {
+    const arr = JSON.parse(document.getElementById('json-import-box')?.value || '');
+    if (!Array.isArray(arr)) throw new Error();
+    const ut = getUserTeam();
+    arr.forEach(item => { if (!item.name||!item.pos) return; const np = createPlayer(item.pos,'starter',item.age||25); np.name=item.name; if(item.ovr) np.ovr=clamp(item.ovr,50,99); ut.roster.unshift(np); });
+    sortDepthChart(ut); closeModal(); showToast(`커스텀 선수 ${arr.length}명 적용!`, 'success'); renderApp();
+  } catch (e) { showToast('유효한 JSON 형식이 아닙니다.', 'error'); }
+}
+
+// ============================================================================
+// 10. BOOTSTRAP
+// ============================================================================
+window.onload = () => {
+  if (!loadFromLocalStorage()) {
+    createNewFranchise('LAC', 'Cole Harper');
+    SCREEN = 'OFFICE';
+  }
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target.id === 'modal-overlay') closeModal(); });
+  window.addEventListener('resize', () => { if (SCREEN === 'MATCH' && LIVE_MATCH) drawFieldCanvas(); });
+  window.addEventListener('keydown', (e) => {
+    const lockEl = document.getElementById('pin-lock-screen');
+    if (!lockEl || lockEl.classList.contains('hidden')) return;
+    if (/^[0-9]$/.test(e.key)) pressPinKey(e.key);
+    else if (e.key === 'Backspace') backspacePinKey();
+  });
+  if (!isPinUnlocked()) {
+    const lockEl = document.getElementById('pin-lock-screen');
+    if (lockEl) { lockEl.classList.remove('hidden'); lockEl.classList.add('flex'); }
+  } else {
+    renderApp();
+  }
+};
+</script>
+</body>
+</html>
